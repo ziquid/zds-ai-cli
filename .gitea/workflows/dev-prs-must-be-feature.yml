@@ -1,0 +1,21 @@
+name: Dev PRs must come from feature branch
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+jobs:
+  enforce:
+    runs-on: self-hosted
+    steps:
+      - name: Enforce base=dev => head=feature/*
+        run: |
+          BASE="${{ gitea.event.pull_request.base.ref }}"
+          HEAD="${{ gitea.event.pull_request.head.ref }}"
+
+          [ "$BASE" != dev ] && exit 0
+          echo "$HEAD" | grep -Eq '^feature/' && exit 0
+
+          echo "PRs targeting 'dev' must come from a feature branch (feature/...).  Current head: $HEAD"
+          exit 1
+

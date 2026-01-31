@@ -1,0 +1,94 @@
+name: Ensure ZDSCS Attribution
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  ensure-attribution:
+    runs-on: self-hosted
+    steps:
+      - name: Ensure ZDSCS attribution in PR body
+        env:
+          ZDS_ACTIONS_TOKEN: ${{ secrets.ZDS_ACTIONS_TOKEN }}
+          ZDS_ATTR: "⚡️ Powered by ZDS AI Agents"
+          AI_DOMAIN: "@ai.zds.group"
+        run: |
+          API="${{ gitea.server_url }}/api/v1"
+          OWNER="${GITHUB_REPOSITORY%%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+          PR_INDEX="$(jq -r '.pull_request.number' "$GITHUB_EVENT_PATH")"
+
+          PR_JSON=$(curl -fsS \
+            -H "Authorization: token $ZDS_ACTIONS_TOKEN" \
+            "$API/repos/$OWNER/$REPO/pulls/$PR_INDEX")
+
+          BODY_RAW=$(echo "$PR_JSON" | jq -r '.body // ""')
+          BODY=$(printf '%s' "$BODY_RAW" | awk '{gsub(/\\n/,"\n"); print}')
+
+          HAS_AI=0
+          COMMITS=$(curl -fsS \
+            -H "Authorization: token $ZDS_ACTIONS_TOKEN" \
+            "$API/repos/$OWNER/$REPO/pulls/$PR_INDEX/commits")
+
+          echo "$COMMITS" \
+            | jq -r '.[].commit.author.email // "", .[].commit.committer.email // ""' \
+            | grep -Eq "$(printf '%s' "$AI_DOMAIN" | sed 's/[.[\*^$(){}+?|\\]/\\&/g')$" && HAS_AI=1
+
+          # Strip any existing ZDS attribution line
+          NEW_BODY=$(printf '%s' "$BODY" \
+            | sed 's/[[:space:]]*$//' \
+            | sed "/^$(printf '%s' "$ZDS_ATTR" | sed 's/[][\\/.*^$]/\\&/g')$/d")
+
+          # Strip any existing AI Co-Authored-By lines (angle or HTML-escaped)
+          AI_DOMAIN_RE=$(printf '%s' "$AI_DOMAIN" | sed -e 's/^@//' -e 's/[.[\*^$(){}+?|\\]/\\&/g')
+          NEW_BODY=$(printf '%s' "$NEW_BODY" \
+            | sed -E "/^.*Co-Authored-By: .*${AI_DOMAIN_RE}.*$/Id")
+
+          # Strip any existing Claude/Anthropic Co-Authored-By lines (email domains only)
+          NEW_BODY=$(printf '%s' "$NEW_BODY" \
+            | sed -E '/^[[:space:]]*Co-Authored-By: .*(&lt;|<)[^>]*@(anthropic\.com|claude\.ai)(&gt;|>)[[:space:]]*$/Id')
+
+          # Strip "Generated with Claude Code"
+          NEW_BODY=$(printf '%s' "$NEW_BODY" \
+            | sed -E '/^[[:space:]]*🤖 Generated with \[Claude Code\]\(https:\/\/claude\.com\/claude-code\)[[:space:]]*$/d')
+
+          # Build unique Co-Authored-By lines for every AI agent in the PR commits
+          AI_COAUTHORS=$(echo "$COMMITS" | jq -r '
+            .[]
+            | .commit.author, .commit.committer
+            | select((.email // "") | endswith("'"$AI_DOMAIN"'"))
+            | select((.name // "") != "" and (.email // "") != "")
+            | "\(.name) <\(.email)>"
+          ' | sort -u)
+
+          if [ "$HAS_AI" -eq 1 ] && [ -z "$AI_COAUTHORS" ]; then
+            echo "ZDSCS failed: AI commits detected but no valid Name <email${AI_DOMAIN}> identities found in commit metadata" >&2
+            exit 1
+          fi
+
+          # Append attribution footer if HAS_AI
+          if [ "$HAS_AI" -eq 1 ]; then
+            NEW_BODY=$(printf '%s' "$NEW_BODY" | sed 's/[[:space:]]*$//')
+            if [ -n "$NEW_BODY" ]; then
+              NEW_BODY="$(printf '%s\n\n%s\n\n' "$NEW_BODY" "$ZDS_ATTR")"
+            else
+              NEW_BODY="$(printf '%s\n\n' "$ZDS_ATTR")"
+            fi
+
+            # Append one Co-Authored-By line per unique AI identity (if any)
+            if [ -n "$AI_COAUTHORS" ]; then
+              while IFS= read -r ident; do
+                [ -n "$ident" ] && NEW_BODY="$(printf '%s\n\nCo-Authored-By: %s\n\n' "$NEW_BODY" "$ident")"
+              done <<EOF
+          $AI_COAUTHORS
+          EOF
+            fi
+          fi
+
+          [ "$NEW_BODY" = "$BODY" ] && exit 0
+          curl -fsS -X PATCH \
+            -H "Authorization: token $ZDS_ACTIONS_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n --arg body "$NEW_BODY" '{body:$body}')" \
+            "$API/repos/$OWNER/$REPO/pulls/$PR_INDEX" >/dev/null
