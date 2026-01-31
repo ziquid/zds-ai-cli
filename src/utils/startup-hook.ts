@@ -36,8 +36,14 @@ export async function executeStartupHook(): Promise<string | undefined> {
     applyEnvVariables(results.env);
 
     // Apply prompt variables to Variable system
+    const seenVars = new Set<string>();
     for (const {name, value} of results.promptVars) {
-      Variable.set(name, value);
+      if (seenVars.has(name)) {
+        Variable.append(name, value);
+      } else {
+        Variable.set(name, value);
+        seenVars.add(name);
+      }
     }
 
     // Combine tool result and system output for the system prompt

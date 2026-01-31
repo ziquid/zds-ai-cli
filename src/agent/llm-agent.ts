@@ -311,8 +311,14 @@ export class LLMAgent extends EventEmitter {
 
           applyEnvVariables(results.env);
 
+          const seenVars = new Set<string>();
           for (const {name, value} of results.promptVars) {
-            Variable.set(name, value);
+            if (seenVars.has(name)) {
+              Variable.append(name, value);
+            } else {
+              Variable.set(name, value);
+              seenVars.add(name);
+            }
           }
 
           // Process hook commands through HookManager
@@ -780,8 +786,14 @@ export class LLMAgent extends EventEmitter {
       if (hookResult.approved && hookResult.commands) {
         const results = applyHookCommands(hookResult.commands);
         applyEnvVariables(results.env);
+        const seenVars = new Set<string>();
         for (const {name, value} of results.promptVars) {
-          Variable.set(name, value);
+          if (seenVars.has(name)) {
+            Variable.append(name, value);
+          } else {
+            Variable.set(name, value);
+            seenVars.add(name);
+          }
         }
         if (results.prefill) {
           this.messageProcessor.setHookPrefillText(results.prefill);
@@ -821,8 +833,14 @@ export class LLMAgent extends EventEmitter {
         if (hookResult.approved && hookResult.commands) {
           const results = applyHookCommands(hookResult.commands);
           applyEnvVariables(results.env);
+          const seenVars = new Set<string>();
           for (const {name, value} of results.promptVars) {
-            Variable.set(name, value);
+            if (seenVars.has(name)) {
+              Variable.append(name, value);
+            } else {
+              Variable.set(name, value);
+              seenVars.add(name);
+            }
           }
           if (results.prefill) {
             this.messageProcessor.setHookPrefillText(results.prefill);
@@ -1289,8 +1307,14 @@ export class LLMAgent extends EventEmitter {
       if (hookResult.approved && hookResult.commands) {
         const results = applyHookCommands(hookResult.commands);
         applyEnvVariables(results.env);
+        const seenVars = new Set<string>();
         for (const {name, value} of results.promptVars) {
-          Variable.set(name, value);
+          if (seenVars.has(name)) {
+            Variable.append(name, value);
+          } else {
+            Variable.set(name, value);
+            seenVars.add(name);
+          }
         }
         if (results.prefill) {
           this.messageProcessor.setHookPrefillText(results.prefill);

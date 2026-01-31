@@ -388,8 +388,14 @@ export class HookManager {
 
     // Apply immediate (non-conditional) commands right away
     applyEnvVariables(commands.env);
+    const seenVars = new Set<string>();
     for (const {name, value} of commands.promptVars) {
-      Variable.set(name, value);
+      if (seenVars.has(name)) {
+        Variable.append(name, value);
+      } else {
+        Variable.set(name, value);
+        seenVars.add(name);
+      }
     }
     if (commands.system) {
       this.deps.chatHistory.push({
@@ -436,8 +442,14 @@ export class HookManager {
       // Apply conditional commands after successful test
       if (commands.conditionalResults) {
         applyEnvVariables(commands.conditionalResults.env);
+        const seenVars = new Set<string>();
         for (const {name, value} of commands.conditionalResults.promptVars) {
-          Variable.set(name, value);
+          if (seenVars.has(name)) {
+            Variable.append(name, value);
+          } else {
+            Variable.set(name, value);
+            seenVars.add(name);
+          }
         }
         if (commands.conditionalResults.system) {
           this.deps.chatHistory.push({
@@ -479,8 +491,14 @@ export class HookManager {
       // Apply conditional commands after successful test
       if (commands.conditionalResults) {
         applyEnvVariables(commands.conditionalResults.env);
+        const seenVars = new Set<string>();
         for (const {name, value} of commands.conditionalResults.promptVars) {
-          Variable.set(name, value);
+          if (seenVars.has(name)) {
+            Variable.append(name, value);
+          } else {
+            Variable.set(name, value);
+            seenVars.add(name);
+          }
         }
         if (commands.conditionalResults.system) {
           this.deps.chatHistory.push({

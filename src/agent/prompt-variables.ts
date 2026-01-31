@@ -164,13 +164,27 @@ export class Variable {
   }
 
   /**
-   * Set variable value
+   * Set variable value (replaces existing values)
    * Creates variable if it doesn't exist
    *
    * @param name Variable name
-   * @param value Value to add
+   * @param value Value to set
    */
   static set(name: string, value: string): void {
+    const variable = Variable.getOrCreate(name);
+    variable.values = [value];
+    variable.isNew = true;
+  }
+
+  /**
+   * Append value to variable (adds to existing values)
+   * Creates variable if it doesn't exist
+   * Use when building multi-value variables within same execution context
+   *
+   * @param name Variable name
+   * @param value Value to append
+   */
+  static append(name: string, value: string): void {
     const variable = Variable.getOrCreate(name);
     variable.values.push(value);
     variable.isNew = true;
