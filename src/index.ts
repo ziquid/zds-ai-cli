@@ -1002,6 +1002,28 @@ program
                   console.error('❌ Failed to edit context:', error instanceof Error ? error.message : String(error));
                   continue;
                 }
+              } else if (subcommand === 'reload') {
+                try {
+                  const { ChatHistoryManager } = await import('./utils/chat-history-manager.js');
+                  const historyManager = ChatHistoryManager.getInstance();
+                  const { systemPrompt: reloadedSystemPrompt, chatHistory: reloadedHistory } = historyManager.loadContext();
+
+                  // Update agent's chat history
+                  agent.setChatHistory(reloadedHistory);
+
+                  // Update system prompt - regenerate if empty
+                  if (reloadedSystemPrompt && reloadedSystemPrompt.trim()) {
+                    agent.setSystemPrompt(reloadedSystemPrompt);
+                  } else {
+                    await agent.buildSystemMessage();
+                  }
+
+                  console.log('✓ Context reloaded from file');
+                  continue;
+                } catch (error) {
+                  console.error('❌ Failed to reload context:', error instanceof Error ? error.message : String(error));
+                  continue;
+                }
               }
             }
 
