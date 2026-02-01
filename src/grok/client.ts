@@ -28,13 +28,45 @@ export interface LLMToolCall {
   };
 }
 
+/**
+ * @deprecated Use WebSearchTool with the Agent Tools API instead.
+ * The search_parameters field is deprecated as of December 15, 2025.
+ */
 export interface SearchParameters {
   mode?: "auto" | "on" | "off";
   // sources removed - let API use default sources to avoid format issues
 }
 
+export interface WebSearchTool {
+  type: "web_search";
+  allowed_domains?: string[];
+  excluded_domains?: string[];
+  enable_image_understanding?: boolean;
+  user_location?: {
+    type: "approximate";
+    country?: string;
+    city?: string;
+    region?: string;
+    timezone?: string;
+  };
+}
+
 export interface SearchOptions {
+  /** @deprecated Use enable_web_search and web_search_filters instead */
   search_parameters?: SearchParameters;
+  enable_web_search?: boolean;
+  web_search_filters?: {
+    allowed_domains?: string[];
+    excluded_domains?: string[];
+    enable_image_understanding?: boolean;
+    user_location?: {
+      type: "approximate";
+      country?: string;
+      city?: string;
+      region?: string;
+      timezone?: string;
+    };
+  };
 }
 
 export interface LLMResponse {
@@ -192,9 +224,37 @@ export class LLMClient {
       max_tokens: maxTokens ?? this.defaultMaxTokens
     };
 
+    // Build tools array including web_search if enabled
+    const allTools: any[] = [...(tools || [])];
+
+    // Add web_search tool if enabled (Agent Tools API)
+    if (searchOptions?.enable_web_search && this.client.baseURL?.includes('x.ai')) {
+      const webSearchTool: any = { type: "web_search" };
+
+      if (searchOptions.web_search_filters) {
+        const filters = searchOptions.web_search_filters;
+        if (filters.allowed_domains) webSearchTool.allowed_domains = filters.allowed_domains;
+        if (filters.excluded_domains) webSearchTool.excluded_domains = filters.excluded_domains;
+        if (filters.enable_image_understanding !== undefined) {
+          webSearchTool.enable_image_understanding = filters.enable_image_understanding;
+        }
+        if (filters.user_location) webSearchTool.user_location = filters.user_location;
+      }
+
+      allTools.push(webSearchTool as any);
+    }
+    // Legacy support for deprecated search_parameters - convert to new Agent Tools API format
+    else if (searchOptions?.search_parameters && this.client.baseURL?.includes('x.ai')) {
+      // Convert old search_parameters format to new web_search tool format
+      if (searchOptions.search_parameters.mode === "on" || searchOptions.search_parameters.mode === "auto") {
+        allTools.push({ type: "web_search" });
+      }
+      // mode === "off" means don't add the tool
+    }
+
     // Only include tools if the model supports them AND tools are provided
-    if (this.supportsTools && tools && tools.length > 0) {
-      requestPayload.tools = tools;
+    if (this.supportsTools && allTools.length > 0) {
+      requestPayload.tools = allTools;
       requestPayload.tool_choice = "auto";
     }
 
@@ -219,17 +279,15 @@ export class LLMClient {
       requestPayload.reasoning = { effort: "none" };
     }
 
-    // Add search parameters if specified and using Grok API (x.ai)
-    if (searchOptions?.search_parameters && this.client.baseURL?.includes('x.ai')) {
-      requestPayload.search_parameters = searchOptions.search_parameters;
-    }
-
     // Log tools being sent to API
-    const toolNames = (tools || []).map(t => t.function.name);
+    const toolNames = allTools
+      .filter((t: any) => t.type === 'function')
+      .map((t: any) => t.function.name);
     const mcpTools = toolNames.filter(name => name.startsWith('mcp__'));
+    const webSearchEnabled = allTools.some((t: any) => t.type === 'web_search');
 
     const debugLogPath = ChatHistoryManager.getDebugLogPath();
-    const logEntry = `${new Date().toISOString()} - API CALL: ${toolNames.length} tools (${mcpTools.length} MCP: ${mcpTools.join(', ')})\n`;
+    const logEntry = `${new Date().toISOString()} - API CALL: ${toolNames.length} tools (${mcpTools.length} MCP: ${mcpTools.join(', ')})${webSearchEnabled ? ' + web_search' : ''}\n`;
     fs.appendFileSync(debugLogPath, logEntry);
 
     // Retry loop for 429 errors
@@ -362,9 +420,39 @@ export class LLMClient {
       stream: true
     };
 
+    // Build tools array including web_search if enabled
+    const allTools: any[] = [...(tools || [])];
+
+    // Add web_search tool if enabled (Agent Tools API)
+    if (searchOptions?.enable_web_search &&
+        (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
+      const webSearchTool: any = { type: "web_search" };
+
+      if (searchOptions.web_search_filters) {
+        const filters = searchOptions.web_search_filters;
+        if (filters.allowed_domains) webSearchTool.allowed_domains = filters.allowed_domains;
+        if (filters.excluded_domains) webSearchTool.excluded_domains = filters.excluded_domains;
+        if (filters.enable_image_understanding !== undefined) {
+          webSearchTool.enable_image_understanding = filters.enable_image_understanding;
+        }
+        if (filters.user_location) webSearchTool.user_location = filters.user_location;
+      }
+
+      allTools.push(webSearchTool as any);
+    }
+    // Legacy support for deprecated search_parameters - convert to new Agent Tools API format
+    else if (searchOptions?.search_parameters &&
+        (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
+      // Convert old search_parameters format to new web_search tool format
+      if (searchOptions.search_parameters.mode === "on" || searchOptions.search_parameters.mode === "auto") {
+        allTools.push({ type: "web_search" });
+      }
+      // mode === "off" means don't add the tool
+    }
+
     // Only include tools if the model supports them
     if (this.supportsTools) {
-      requestPayload.tools = tools || [];
+      requestPayload.tools = allTools;
     }
 
     // Only add think parameter for backends that support it (Grok, Ollama)
@@ -404,14 +492,8 @@ export class LLMClient {
                                (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false) ||
                                (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['openai.com', 'api.openai.com']) : false) ||
                                (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['openrouter.ai', 'api.openrouter.ai']) : false);
-    if (this.supportsTools && supportsToolChoice && tools && tools.length > 0) {
+    if (this.supportsTools && supportsToolChoice && allTools.length > 0) {
       requestPayload.tool_choice = "auto";
-    }
-
-    // Add search parameters if specified and using Grok API (x.ai)
-    if (searchOptions?.search_parameters &&
-        (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
-      requestPayload.search_parameters = searchOptions.search_parameters;
     }
 
     // Retry loop for 429 errors
@@ -532,6 +614,27 @@ export class LLMClient {
     throw new Error(`${this.backendName} API error: Max retries exceeded`);
   }
 
+  /**
+   * @deprecated This method uses the deprecated search_parameters API.
+   *
+   * Migrate to using chat() with enable_web_search instead:
+   *
+   * ```typescript
+   * const searchOptions: SearchOptions = {
+   *   enable_web_search: true,
+   *   web_search_filters: {
+   *     allowed_domains: ['example.com'],  // optional
+   *     excluded_domains: ['spam.com'],    // optional
+   *     enable_image_understanding: true   // optional
+   *   }
+   * };
+   *
+   * await client.chat([{role: "user", content: query}], [], undefined, searchOptions);
+   * ```
+   *
+   * The search_parameters field was deprecated by Grok API on December 15, 2025.
+   * See: https://docs.x.ai/docs/guides/tools/search-tools
+   */
   async search(
     query: string,
     searchParameters?: SearchParameters
@@ -541,8 +644,9 @@ export class LLMClient {
       content: query,
     };
 
+    // Use new Agent Tools API format instead of deprecated search_parameters
     const searchOptions: SearchOptions = {
-      search_parameters: searchParameters || { mode: "on" },
+      enable_web_search: true,
     };
 
     return this.chat([searchMessage], [], undefined, searchOptions);

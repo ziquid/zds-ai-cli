@@ -83,6 +83,11 @@
 - [  ] 14: Persona is not being saved in context.json when personas are changed
 - [✅] 15: Fixed Variable.set() semantics to replace values instead of appending (Issue #28)
 - [✅] 16: Fixed APP:TOOLS duplication by tracking seen variables and using append() for duplicates (Issue #28)
+- [✅] 17: Migrated Grok API from deprecated search_parameters to Agent Tools API (Issue #25)
+   - Fixed 410 error "Live search is deprecated"
+   - Added WebSearchTool interface with full filter support
+   - Updated chat() and chatStream() to use tools array with {type: "web_search"}
+   - Maintains backward compatibility -- old search_parameters auto-convert to new format
 
 ## Version 0.2.0
 
