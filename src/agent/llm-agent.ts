@@ -241,6 +241,7 @@ export class LLMAgent extends EventEmitter {
   private sessionManager: SessionManager;
   private messageProcessor: MessageProcessor;
   private contextManager: ContextManager;
+  private maxContextSize: number = 128000; // Default context size, can be overridden by MAXCONTEXT hook command
 
 
 
@@ -333,6 +334,10 @@ export class LLMAgent extends EventEmitter {
           if (results.prefill) {
             this.messageProcessor.setHookPrefillText(results.prefill);
           }
+
+          if (results.maxContext !== undefined) {
+            this.maxContextSize = results.maxContext;
+          }
         }
       }
     }
@@ -417,6 +422,7 @@ export class LLMAgent extends EventEmitter {
       temperature: this.temperature,
       getCurrentTokenCount: () => this.getCurrentTokenCount(),
       getMaxContextSize: () => this.getMaxContextSize(),
+      setMaxContextSize: (size: number) => this.setMaxContextSize(size),
       getCurrentModel: () => this.getCurrentModel(),
       emit: (event: string, data: any) => this.emit(event, data),
       setApiKeyEnvVar: (value: string) => { this.apiKeyEnvVar = value; },
@@ -797,6 +803,9 @@ export class LLMAgent extends EventEmitter {
         }
         if (results.prefill) {
           this.messageProcessor.setHookPrefillText(results.prefill);
+        }
+        if (results.maxContext !== undefined) {
+          this.maxContextSize = results.maxContext;
         }
       }
     }
@@ -1318,6 +1327,9 @@ export class LLMAgent extends EventEmitter {
         }
         if (results.prefill) {
           this.messageProcessor.setHookPrefillText(results.prefill);
+        }
+        if (results.maxContext !== undefined) {
+          this.maxContextSize = results.maxContext;
         }
       }
     }
@@ -1922,9 +1934,7 @@ export class LLMAgent extends EventEmitter {
    * @todo Make this model-specific for different context windows
    */
   getMaxContextSize(): number {
-    // TODO: Make this model-specific when different models have different context windows
-    // For now, return the standard Grok context window size
-    return 128000;
+    return this.maxContextSize;
   }
 
   /**

@@ -46,16 +46,16 @@ export interface HookResult {
 }
 
 export interface HookCommand {
-  type: "ENV" | "TOOL_RESULT" | "ECHO" | "RUN" | "BACKEND" | "MODEL" | "SYSTEM" | "SYSTEM_FILE" | "BASE_URL" | "API_KEY_ENV_VAR" | "SET" | "SET_FILE" | "SET_TEMP_FILE" | "PREFILL" | "CALL";
+  type: "ENV" | "TOOL_RESULT" | "ECHO" | "RUN" | "BACKEND" | "MODEL" | "SYSTEM" | "SYSTEM_FILE" | "BASE_URL" | "API_KEY_ENV_VAR" | "SET" | "SET_FILE" | "SET_TEMP_FILE" | "PREFILL" | "CALL" | "MAXCONTEXT";
   value: string;
   isConditional?: boolean;
 }
 
 /**
  * Parse hook output for command directives
- * Lines starting with "ENV ", "TOOL_RESULT ", "ECHO ", "RUN ", "BACKEND ", "MODEL ", "SYSTEM ", "SYSTEM_FILE ", "BASE_URL ", "API_KEY_ENV_VAR ", "SET ", "SET_FILE ", "SET_TEMP_FILE ", "PREFILL ", or "CALL " are commands
+ * Lines starting with "ENV ", "TOOL_RESULT ", "ECHO ", "RUN ", "BACKEND ", "MODEL ", "SYSTEM ", "SYSTEM_FILE ", "BASE_URL ", "API_KEY_ENV_VAR ", "SET ", "SET_FILE ", "SET_TEMP_FILE ", "PREFILL ", "CALL ", or "MAXCONTEXT " are commands
  * BACKEND and MODEL commands may optionally be prefixed with "CONDITION " for clarity
- * ENV, SET*, SYSTEM*, TOOL_RESULT, PREFILL, and CALL commands may be prefixed with "CONDITIONAL " to make them dependent on backend/model test success
+ * ENV, SET*, SYSTEM*, TOOL_RESULT, PREFILL, CALL, and MAXCONTEXT commands may be prefixed with "CONDITIONAL " to make them dependent on backend/model test success
  * Other lines are treated as TOOL_RESULT if present
  */
 function parseHookOutput(stdout: string): HookCommand[] {
@@ -130,6 +130,8 @@ function parseHookOutput(stdout: string): HookCommand[] {
       commands.push({ type: "PREFILL", value: line.slice(8), isConditional });
     } else if (line.startsWith("CALL ")) {
       commands.push({ type: "CALL", value: line.slice(5), isConditional });
+    } else if (line.startsWith("MAXCONTEXT ")) {
+      commands.push({ type: "MAXCONTEXT", value: line.slice(11), isConditional });
     } else if (line.trim()) {
       // Non-empty lines without a command prefix are treated as TOOL_RESULT
       commands.push({ type: "TOOL_RESULT", value: line, isConditional });
@@ -148,6 +150,7 @@ export interface HookCommandResults {
   baseUrl?: string;
   apiKeyEnvVar?: string;
   prefill?: string;
+  maxContext?: number;
   promptVars: Array<{name: string; value: string}>;
   calls: string[];
   conditionalResults?: {
@@ -155,6 +158,7 @@ export interface HookCommandResults {
     toolResult: string;
     system: string;
     prefill?: string;
+    maxContext?: number;
     promptVars: Array<{name: string; value: string}>;
     calls: string[];
   };
@@ -172,6 +176,7 @@ export interface HookCommandResults {
  * BASE_URL commands set the base URL to use (last one wins if multiple)
  * API_KEY_ENV_VAR commands set the env var name for API key (last one wins if multiple)
  * PREFILL commands set assistant prefill text (last one wins if multiple)
+ * MAXCONTEXT commands set maximum context size in tokens (last one wins if multiple)
  * SET commands set prompt variables (text limited to 10,000 bytes)
  * SET_FILE commands read file contents (up to 20,000 bytes) and set prompt variables
  * SET_TEMP_FILE commands read file contents (up to 20,000 bytes), set prompt variables, and delete file
@@ -198,6 +203,7 @@ export function applyHookCommands(commands: HookCommand[]): HookCommandResults {
       toolResult: conditionalBatch.toolResult,
       system: conditionalBatch.system,
       prefill: conditionalBatch.prefill,
+      maxContext: conditionalBatch.maxContext,
       promptVars: conditionalBatch.promptVars,
       calls: conditionalBatch.calls,
     };
@@ -224,6 +230,7 @@ function processCommandBatch(commands: HookCommand[]): HookCommandResults {
   let baseUrl: string | undefined = undefined;
   let apiKeyEnvVar: string | undefined = undefined;
   let prefill: string | undefined = undefined;
+  let maxContext: number | undefined = undefined;
 
   for (const cmd of commands) {
     if (cmd.type === "ENV") {
@@ -363,6 +370,12 @@ function processCommandBatch(commands: HookCommand[]): HookCommandResults {
     } else if (cmd.type === "PREFILL") {
       // PREFILL sets the assistant prefill text (last one wins if multiple)
       prefill = cmd.value;
+    } else if (cmd.type === "MAXCONTEXT") {
+      // MAXCONTEXT sets the maximum context size in tokens (last one wins if multiple)
+      const value = parseInt(cmd.value.trim(), 10);
+      if (!isNaN(value) && value > 0) {
+        maxContext = value;
+      }
     } else if (cmd.type === "CALL") {
       // CALL commands are collected for asynchronous execution after hook processing
       calls.push(cmd.value);
@@ -378,6 +391,7 @@ function processCommandBatch(commands: HookCommand[]): HookCommandResults {
     baseUrl,
     apiKeyEnvVar,
     prefill,
+    maxContext,
     promptVars,
     calls,
   };

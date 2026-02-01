@@ -11,8 +11,8 @@
    - [✅] 1.4: Add preToolCall hook
    - [✅] 1.5: Add postToolCall hook
 
-- [  ] 2: HOOK COMMANDS
-   - [  ] 2.1: Add MAXCONTEXT command for setting maximum context length
+- [✅] 2: HOOK COMMANDS
+   - [✅] 2.1: Add MAXCONTEXT command for setting maximum context length
 
 - [🔘] 3: CODE IMPROVEMENTS
    - [  ] 3.1: Introduce StreamingLLMAgent class
