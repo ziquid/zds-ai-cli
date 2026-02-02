@@ -100,6 +100,7 @@
       - Improve error handling and validation
       - Simplify the interface for loading/saving settings
       - Better separation of user vs project settings
+   - [  ] 1.3: Add support for Grok xAI Messages API
 
 - [  ] 2: DATA PERSISTENCE
    - [  ] 2.1: Migrate context storage from JSON files to SQLite database
