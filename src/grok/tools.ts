@@ -736,6 +736,23 @@ const BASE_LLM_TOOLS: LLMTool[] = [
   {
     type: "function",
     function: {
+      name: "compareImageToPrompt",
+      description: "Compare an AI-generated image to its original generation prompt by extracting the prompt from PNG metadata and captioning the image to analyze how well they match",
+      parameters: {
+        type: "object",
+        properties: {
+          filename: {
+            type: "string",
+            description: "Path to the PNG image file to analyze",
+          },
+        },
+        required: ["filename"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "listImageModels",
       description: "List available Stable Diffusion models installed on the server",
       parameters: {

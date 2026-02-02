@@ -19,10 +19,10 @@
    - [✅] 3.2: Move sessionState to top of context.json file
    - [✅] 3.3: added /context reload command to reload context verbatim
 
-- [🔘] 4: Tool enhancements
+- [✅] 4: Tool enhancements
    - [✅] 4.1: Add encode-speech tool
    - [✅] 4.2: Add getLoraDetails to ImageTool
-   - [  ] 4.3: Add compareImageToPrompt to ImageTool
+   - [✅] 4.3: Add compareImageToPrompt to ImageTool
    - [✅] 4.4: Add joycaption.sh helper script to repository
 
 - [✅] 5: TECHNICAL DEBT

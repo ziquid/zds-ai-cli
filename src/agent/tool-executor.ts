@@ -360,6 +360,8 @@ export class ToolExecutor {
         );
       case "captionImage":
         return await this.imageTool.captionImage(args.filename, args.backend);
+      case "compareImageToPrompt":
+        return await this.imageTool.compareImageToPrompt(args.filename);
       case "pngInfo":
         return await this.imageTool.pngInfo(args.filename);
       case "listImageModels":

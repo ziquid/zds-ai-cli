@@ -239,6 +239,60 @@ export class ImageTool implements ToolDiscovery {
   }
 
   /**
+   * Compare an AI-generated image to its original generation prompt.
+   * Extracts the prompt from PNG metadata using exiftool, captions the image, and analyzes match.
+   */
+  async compareImageToPrompt(
+    filename: string
+  ): Promise<ToolResult> {
+    try {
+      // Build command using compare-image-to-prompt.sh script
+      const escapedFilename = filename.replace(/'/g, "'\\''");
+      const command = `compare-image-to-prompt.sh '${escapedFilename}'`;
+
+      try {
+        const { stdout, stderr } = await execAsync(command, {
+          timeout: 120000, // 2 minute timeout (metadata extraction + captioning + LLM analysis)
+          shell: '/bin/zsh'
+        });
+
+        // If there's stderr output, include it but still return success if we got stdout
+        if (stderr && !stdout) {
+          return {
+            success: false,
+            error: `Image comparison failed: ${stderr}`,
+            output: stderr
+          };
+        }
+
+        const analysis = stdout.trim();
+        return {
+          success: true,
+          output: analysis,
+          displayOutput: `Image compared to its generation prompt`
+        };
+      } catch (error: any) {
+        // Extract error details
+        const errorMessage = error.message || "Unknown error";
+        const stderr = error.stderr || "";
+        const stdout = error.stdout || "";
+
+        return {
+          success: false,
+          error: `Image comparison failed (code ${error.code || 'unknown'}): ${errorMessage}${stderr ? '\nstderr: ' + stderr : ''}${stdout ? '\nstdout: ' + stdout : ''}`,
+          output: `Error code: ${error.code || 'unknown'}\n${errorMessage}${stderr ? '\nstderr: ' + stderr : ''}${stdout ? '\nstdout: ' + stdout : ''}`
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error comparing image to prompt",
+        output: error instanceof Error ? error.message : "Unknown error comparing image to prompt"
+      };
+    }
+  }
+
+  /**
    * Extract PNG metadata (generation settings) from a PNG file.
    * Uses exiftool to read embedded generation parameters.
    */
