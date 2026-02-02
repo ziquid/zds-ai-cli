@@ -34,7 +34,7 @@ export interface LLMToolCall {
  */
 export interface SearchParameters {
   mode?: "auto" | "on" | "off";
-  // sources removed - let API use default sources to avoid format issues
+  // sources removed -- let API use default sources to avoid format issues
 }
 
 export interface WebSearchTool {
@@ -224,33 +224,34 @@ export class LLMClient {
       max_tokens: maxTokens ?? this.defaultMaxTokens
     };
 
-    // Build tools array including web_search if enabled
+    // Build tools array (web_search disabled for Grok -- use Tavily instead)
     const allTools: any[] = [...(tools || [])];
 
-    // Add web_search tool if enabled (Agent Tools API)
-    if (searchOptions?.enable_web_search && this.client.baseURL?.includes('x.ai')) {
-      const webSearchTool: any = { type: "web_search" };
-
-      if (searchOptions.web_search_filters) {
-        const filters = searchOptions.web_search_filters;
-        if (filters.allowed_domains) webSearchTool.allowed_domains = filters.allowed_domains;
-        if (filters.excluded_domains) webSearchTool.excluded_domains = filters.excluded_domains;
-        if (filters.enable_image_understanding !== undefined) {
-          webSearchTool.enable_image_understanding = filters.enable_image_understanding;
-        }
-        if (filters.user_location) webSearchTool.user_location = filters.user_location;
-      }
-
-      allTools.push(webSearchTool as any);
-    }
-    // Legacy support for deprecated search_parameters - convert to new Agent Tools API format
-    else if (searchOptions?.search_parameters && this.client.baseURL?.includes('x.ai')) {
-      // Convert old search_parameters format to new web_search tool format
-      if (searchOptions.search_parameters.mode === "on" || searchOptions.search_parameters.mode === "auto") {
-        allTools.push({ type: "web_search" });
-      }
-      // mode === "off" means don't add the tool
-    }
+    // DISABLED: Grok web_search temporarily disabled due to API inconsistencies
+    // Agents should use Tavily for web search instead
+    // if (searchOptions?.enable_web_search && this.client.baseURL?.includes('x.ai')) {
+    //   const webSearchTool: any = { type: "web_search" };
+    //
+    //   if (searchOptions.web_search_filters) {
+    //     const filters = searchOptions.web_search_filters;
+    //     if (filters.allowed_domains) webSearchTool.allowed_domains = filters.allowed_domains;
+    //     if (filters.excluded_domains) webSearchTool.excluded_domains = filters.excluded_domains;
+    //     if (filters.enable_image_understanding !== undefined) {
+    //       webSearchTool.enable_image_understanding = filters.enable_image_understanding;
+    //     }
+    //     if (filters.user_location) webSearchTool.user_location = filters.user_location;
+    //   }
+    //
+    //   allTools.push(webSearchTool as any);
+    // }
+    // // Legacy support for deprecated search_parameters - convert to new Agent Tools API format
+    // else if (searchOptions?.search_parameters && this.client.baseURL?.includes('x.ai')) {
+    //   // Convert old search_parameters format to new web_search tool format
+    //   if (searchOptions.search_parameters.mode === "on" || searchOptions.search_parameters.mode === "auto") {
+    //     allTools.push({ type: "web_search" });
+    //   }
+    //   // mode === "off" means don't add the tool
+    // }
 
     // Only include tools if the model supports them AND tools are provided
     if (this.supportsTools && allTools.length > 0) {
@@ -420,35 +421,36 @@ export class LLMClient {
       stream: true
     };
 
-    // Build tools array including web_search if enabled
+    // Build tools array (web_search disabled for Grok -- use Tavily instead)
     const allTools: any[] = [...(tools || [])];
 
-    // Add web_search tool if enabled (Agent Tools API)
-    if (searchOptions?.enable_web_search &&
-        (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
-      const webSearchTool: any = { type: "web_search" };
-
-      if (searchOptions.web_search_filters) {
-        const filters = searchOptions.web_search_filters;
-        if (filters.allowed_domains) webSearchTool.allowed_domains = filters.allowed_domains;
-        if (filters.excluded_domains) webSearchTool.excluded_domains = filters.excluded_domains;
-        if (filters.enable_image_understanding !== undefined) {
-          webSearchTool.enable_image_understanding = filters.enable_image_understanding;
-        }
-        if (filters.user_location) webSearchTool.user_location = filters.user_location;
-      }
-
-      allTools.push(webSearchTool as any);
-    }
-    // Legacy support for deprecated search_parameters - convert to new Agent Tools API format
-    else if (searchOptions?.search_parameters &&
-        (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
-      // Convert old search_parameters format to new web_search tool format
-      if (searchOptions.search_parameters.mode === "on" || searchOptions.search_parameters.mode === "auto") {
-        allTools.push({ type: "web_search" });
-      }
-      // mode === "off" means don't add the tool
-    }
+    // DISABLED: Grok web_search temporarily disabled due to API inconsistencies
+    // Agents should use Tavily for web search instead
+    // if (searchOptions?.enable_web_search &&
+    //     (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
+    //   const webSearchTool: any = { type: "web_search" };
+    //
+    //   if (searchOptions.web_search_filters) {
+    //     const filters = searchOptions.web_search_filters;
+    //     if (filters.allowed_domains) webSearchTool.allowed_domains = filters.allowed_domains;
+    //     if (filters.excluded_domains) webSearchTool.excluded_domains = filters.excluded_domains;
+    //     if (filters.enable_image_understanding !== undefined) {
+    //       webSearchTool.enable_image_understanding = filters.enable_image_understanding;
+    //     }
+    //     if (filters.user_location) webSearchTool.user_location = filters.user_location;
+    //   }
+    //
+    //   allTools.push(webSearchTool as any);
+    // }
+    // // Legacy support for deprecated search_parameters - convert to new Agent Tools API format
+    // else if (searchOptions?.search_parameters &&
+    //     (this.client.baseURL ? this.isAllowedHost(this.client.baseURL, ['x.ai', 'api.x.ai']) : false)) {
+    //   // Convert old search_parameters format to new web_search tool format
+    //   if (searchOptions.search_parameters.mode === "on" || searchOptions.search_parameters.mode === "auto") {
+    //     allTools.push({ type: "web_search" });
+    //   }
+    //   // mode === "off" means don't add the tool
+    // }
 
     // Only include tools if the model supports them
     if (this.supportsTools) {

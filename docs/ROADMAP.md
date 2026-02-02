@@ -87,6 +87,10 @@
    - Added WebSearchTool interface with full filter support
    - Updated chat() and chatStream() to use tools array with {type: "web_search"}
    - Maintains backward compatibility -- old search_parameters auto-convert to new format
+- [✅] 18: Disabled Grok web_search tool due to API inconsistencies (PR #49)
+   - Temporarily disabled web_search tool creation in chat() and chatStream() methods
+   - Agents should use Tavily for web search instead
+   - Code preserved for future re-enable when Grok API behavior is clarified
 
 ## Version 0.2.0
 
