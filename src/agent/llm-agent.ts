@@ -422,7 +422,6 @@ export class LLMAgent extends EventEmitter {
       temperature: this.temperature,
       getCurrentTokenCount: () => this.getCurrentTokenCount(),
       getMaxContextSize: () => this.getMaxContextSize(),
-      setMaxContextSize: (size: number) => this.setMaxContextSize(size),
       getCurrentModel: () => this.getCurrentModel(),
       emit: (event: string, data: any) => this.emit(event, data),
       setApiKeyEnvVar: (value: string) => { this.apiKeyEnvVar = value; },
