@@ -14,10 +14,9 @@
 - [✅] 2: HOOK COMMANDS
    - [✅] 2.1: Add MAXCONTEXT command for setting maximum context length
 
-- [🔘] 3: CODE IMPROVEMENTS
-   - [  ] 3.1: Introduce StreamingLLMAgent class
-   - [✅] 3.2: Move sessionState to top of context.json file
-   - [✅] 3.3: added /context reload command to reload context verbatim
+- [✅] 3: CODE IMPROVEMENTS
+   - [✅] 3.1: Move sessionState to top of context.json file
+   - [✅] 3.2: added /context reload command to reload context verbatim
 
 - [✅] 4: Tool enhancements
    - [✅] 4.1: Add encode-speech tool
@@ -94,8 +93,9 @@
 ### Features
 
 - [  ] 1: CODE IMPROVEMENTS
-   - [  ] 1.1: Start separating FE and BE
-   - [  ] 1.2: Refactor settings manager
+   - [  ] 1.1: Introduce StreamingLLMAgent class
+   - [  ] 1.2: Start separating FE and BE
+   - [  ] 1.3: Refactor settings manager
       - Clean up settings-manager.ts code structure
       - Improve error handling and validation
       - Simplify the interface for loading/saving settings
