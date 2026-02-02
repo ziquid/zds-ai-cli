@@ -29,9 +29,9 @@
    - [✅] 5.1: Reduce duplicate code in llm-agent.ts
    - [✅] 5.2: Refactor llm-agent.ts to move tasks to helpers
 
-- [🔘] 6: DOCUMENTATION IMPROVEMENTS
+- [✅] 6: DOCUMENTATION IMPROVEMENTS
    - [✅] 6.1: Update the morph tool instructions
-   - [  ] 6.2: Update the README
+   - [✅] 6.2: Update the README
    - [✅] 6.3: Documented classes in src/agent
    - [✅] 6.4: Add AGENTS.md
 
