@@ -1,5 +1,6 @@
 import { LLMAgent, ChatEntry } from "../agent/llm-agent.js";
 import { ConfirmationService } from "./confirmation-service.js";
+import { ChatHistoryManager } from "./chat-history-manager.js";
 
 /**
  * Built-in slash commands list - single source of truth
@@ -161,7 +162,6 @@ export async function processSlashCommand(
       // No need to add it again via addChatEntry()
 
       // Save compacted context to disk
-      const { ChatHistoryManager } = await import("../utils/chat-history-manager.js");
       const historyManager = ChatHistoryManager.getInstance();
       const sessionState = agent.getSessionState();
       historyManager.saveContext(agent.getSystemPrompt(), agent.getChatHistory(), sessionState);
@@ -412,6 +412,11 @@ export async function processSlashCommand(
       addChatEntry(confirmEntry);
       if (clearInput) clearInput();
     }
+
+    // Save persona change to context
+    const historyManager = ChatHistoryManager.getInstance();
+    const sessionState = agent.getSessionState();
+    historyManager.saveContext(agent.getSystemPrompt(), agent.getChatHistory(), sessionState);
 
     return true;
   }

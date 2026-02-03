@@ -270,7 +270,6 @@ export function useInputHandler({
       if (trimmed === "y" || trimmed === "yes") {
         // User confirmed - replace context
         const fs = await import("fs");
-        const { ChatHistoryManager } = await import("../utils/chat-history-manager.js");
 
         fs.copyFileSync(tmpJsonPath, contextFilePath);
 
@@ -527,7 +526,6 @@ export function useInputHandler({
         setChatHistory(agent.getChatHistory());
 
         // Save compacted context to disk
-        const { ChatHistoryManager } = await import("../utils/chat-history-manager.js");
         const historyManager = ChatHistoryManager.getInstance();
         const sessionState = agent.getSessionState();
         historyManager.saveContext(agent.getSystemPrompt(), agent.getChatHistory(), sessionState);
@@ -661,7 +659,6 @@ Available models: ${modelNames.join(", ")}`,
           const path = await import("path");
 
           // Get context file path
-          const { ChatHistoryManager } = await import("../utils/chat-history-manager.js");
           const historyManager = ChatHistoryManager.getInstance();
           const contextFilePath = historyManager.getContextFilePath();
 
@@ -741,7 +738,6 @@ Available models: ${modelNames.join(", ")}`,
           const path = await import("path");
 
           // Get context file path
-          const { ChatHistoryManager } = await import("../utils/chat-history-manager.js");
           const historyManager = ChatHistoryManager.getInstance();
           const contextFilePath = historyManager.getContextFilePath();
 
@@ -897,7 +893,6 @@ Available models: ${modelNames.join(", ")}`,
         // Reload context from context.json file immediately (no editor, no confirmation)
         try {
           const fs = await import("fs");
-          const { ChatHistoryManager } = await import("../utils/chat-history-manager.js");
 
           // Get context file path
           const historyManager = ChatHistoryManager.getInstance();
@@ -988,14 +983,23 @@ Available models: ${modelNames.join(", ")}`,
 
       const persona = parts[1];
       const color = parts[2];
-      agent.setPersona(persona, color);
+      const result = await agent.setPersona(persona, color);
 
       const confirmEntry: ChatEntry = {
         type: "assistant",
-        content: `Persona set to: ${persona}${color ? ` (${color})` : ''}`,
+        content: result.success
+          ? `Persona set to: ${persona}${color ? ` (${color})` : ''}`
+          : `Failed to set persona: ${result.error || 'Unknown error'}`,
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, confirmEntry]);
+
+      // Save context with updated session state
+      if (result.success) {
+        const historyManager = ChatHistoryManager.getInstance();
+        historyManager.saveContext(agent.getSystemPrompt(), agent.getChatHistory(), agent.getSessionState());
+      }
+
       clearInput();
       return true;
     }
@@ -1025,6 +1029,13 @@ Available models: ${modelNames.join(", ")}`,
         timestamp: new Date(),
       };
       setChatHistory((prev) => [...prev, confirmEntry]);
+
+      // Save context with updated session state
+      if (result.success) {
+        const historyManager = ChatHistoryManager.getInstance();
+        historyManager.saveContext(agent.getSystemPrompt(), agent.getChatHistory(), agent.getSessionState());
+      }
+
       clearInput();
       return true;
     }
