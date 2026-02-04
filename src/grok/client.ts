@@ -253,6 +253,13 @@ export class LLMClient {
     //   // mode === "off" means don't add the tool
     // }
 
+    // OpenAI has a hard limit of 128 tools per request
+    const isOpenAI = this.client.baseURL?.includes('openai.com');
+    if (isOpenAI && allTools.length > 128) {
+      console.error(`OpenAI tool limit: ${allTools.length} tools exceeds maximum of 128.  Trimming to 128 tools (base tools prioritized over MCP tools).`);
+      allTools.splice(128);
+    }
+
     // Only include tools if the model supports them AND tools are provided
     if (this.supportsTools && allTools.length > 0) {
       requestPayload.tools = allTools;
@@ -451,6 +458,13 @@ export class LLMClient {
     //   }
     //   // mode === "off" means don't add the tool
     // }
+
+    // OpenAI has a hard limit of 128 tools per request
+    const isOpenAI = this.client.baseURL?.includes('openai.com');
+    if (isOpenAI && allTools.length > 128) {
+      console.error(`OpenAI tool limit: ${allTools.length} tools exceeds maximum of 128.  Trimming to 128 tools (base tools prioritized over MCP tools).`);
+      allTools.splice(128);
+    }
 
     // Only include tools if the model supports them
     if (this.supportsTools) {

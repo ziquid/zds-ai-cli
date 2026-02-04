@@ -95,6 +95,11 @@
    - hookManager.setPersona/setMood/startActiveTask now call deps methods to update agent properties
    - Previously only set environment variables, causing getPersona/getMood/getActiveTask to return empty strings
    - Fixes bug where persona was saved to context.json but not restored on session resume
+- [✅] 20: Fixed OpenAI API error with tools array exceeding 128 tool limit (Issue #55)
+   - OpenAI has hard limit of 128 tools per request
+   - Added tool count check in chat() and chatStream() methods
+   - Trims tools array to 128 when using OpenAI backend (base tools prioritized over MCP tools)
+   - Logs warning when trimming occurs
 
 ## Version 0.2.0
 
