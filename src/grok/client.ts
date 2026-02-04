@@ -217,12 +217,29 @@ export class LLMClient {
     const modelToUse = model || this.currentModel;
     const cleanModelName = this.parseModelSuffix(modelToUse).cleanModel;
 
+    // OpenAI detection for parameter compatibility
+    const isOpenAI = this.client.baseURL?.includes('openai.com');
+
     const requestPayload: any = {
       model: cleanModelName,
       messages,
-      temperature: temperature ?? 0.7,
-      max_tokens: maxTokens ?? this.defaultMaxTokens
+      temperature: temperature ?? 0.7
     };
+
+    // OpenAI models from gpt-5.x, o1, o3, o4-mini onwards require max_completion_tokens
+    // instead of max_tokens.  Use max_completion_tokens for these newer models.
+    const usesMaxCompletionTokens = isOpenAI && (
+      cleanModelName.startsWith('gpt-5') ||
+      cleanModelName.startsWith('o1') ||
+      cleanModelName.startsWith('o3') ||
+      cleanModelName.startsWith('o4-mini')
+    );
+
+    if (usesMaxCompletionTokens) {
+      requestPayload.max_completion_tokens = maxTokens ?? this.defaultMaxTokens;
+    } else {
+      requestPayload.max_tokens = maxTokens ?? this.defaultMaxTokens;
+    }
 
     // Build tools array (web_search disabled for Grok -- use Tavily instead)
     const allTools: any[] = [...(tools || [])];
@@ -254,7 +271,6 @@ export class LLMClient {
     // }
 
     // OpenAI has a hard limit of 128 tools per request
-    const isOpenAI = this.client.baseURL?.includes('openai.com');
     if (isOpenAI && allTools.length > 128) {
       console.error(`OpenAI tool limit: ${allTools.length} tools exceeds maximum of 128.  Trimming to 128 tools (base tools prioritized over MCP tools).`);
       allTools.splice(128);
@@ -420,13 +436,30 @@ export class LLMClient {
     const modelToUse = model || this.currentModel;
     const cleanModelName = this.parseModelSuffix(modelToUse).cleanModel;
 
+    // OpenAI detection for parameter compatibility
+    const isOpenAI = this.client.baseURL?.includes('openai.com');
+
     const requestPayload: any = {
       model: cleanModelName,
       messages,
       temperature: temperature ?? 0.7,
-      max_tokens: maxTokens ?? this.defaultMaxTokens,
       stream: true
     };
+
+    // OpenAI models from gpt-5.x, o1, o3, o4-mini onwards require max_completion_tokens
+    // instead of max_tokens.  Use max_completion_tokens for these newer models.
+    const usesMaxCompletionTokens = isOpenAI && (
+      cleanModelName.startsWith('gpt-5') ||
+      cleanModelName.startsWith('o1') ||
+      cleanModelName.startsWith('o3') ||
+      cleanModelName.startsWith('o4-mini')
+    );
+
+    if (usesMaxCompletionTokens) {
+      requestPayload.max_completion_tokens = maxTokens ?? this.defaultMaxTokens;
+    } else {
+      requestPayload.max_tokens = maxTokens ?? this.defaultMaxTokens;
+    }
 
     // Build tools array (web_search disabled for Grok -- use Tavily instead)
     const allTools: any[] = [...(tools || [])];
@@ -460,7 +493,6 @@ export class LLMClient {
     // }
 
     // OpenAI has a hard limit of 128 tools per request
-    const isOpenAI = this.client.baseURL?.includes('openai.com');
     if (isOpenAI && allTools.length > 128) {
       console.error(`OpenAI tool limit: ${allTools.length} tools exceeds maximum of 128.  Trimming to 128 tools (base tools prioritized over MCP tools).`);
       allTools.splice(128);

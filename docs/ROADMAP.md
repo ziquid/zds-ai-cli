@@ -100,6 +100,11 @@
    - Added tool count check in chat() and chatStream() methods
    - Trims tools array to 128 when using OpenAI backend (base tools prioritized over MCP tools)
    - Logs warning when trimming occurs
+- [✅] 21: Fixed OpenAI API 400 error with newer models requiring max_completion_tokens (Issue #57)
+   - OpenAI models from gpt-5.x, o1, o3, o4-mini onwards require max_completion_tokens instead of max_tokens
+   - Added model detection logic to use correct parameter based on model name
+   - Applied to both chat() and chatStream() methods in src/grok/client.ts
+   - Maintains backward compatibility for older models and non-OpenAI backends
 
 ## Version 0.2.0
 
