@@ -91,6 +91,10 @@
    - Temporarily disabled web_search tool creation in chat() and chatStream() methods
    - Agents should use Tavily for web search instead
    - Code preserved for future re-enable when Grok API behavior is clarified
+- [✅] 19: Fixed persona/mood/task not being restored in session resume (Issue #27)
+   - hookManager.setPersona/setMood/startActiveTask now call deps methods to update agent properties
+   - Previously only set environment variables, causing getPersona/getMood/getActiveTask to return empty strings
+   - Fixes bug where persona was saved to context.json but not restored on session resume
 
 ## Version 0.2.0
 

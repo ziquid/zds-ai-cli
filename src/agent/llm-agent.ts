@@ -426,7 +426,10 @@ export class LLMAgent extends EventEmitter {
       emit: (event: string, data: any) => this.emit(event, data),
       setApiKeyEnvVar: (value: string) => { this.apiKeyEnvVar = value; },
       setTokenCounter: (counter: TokenCounter) => { this.tokenCounter = counter; },
-      setLLMClient: (client: LLMClient) => { this.llmClient = client; }
+      setLLMClient: (client: LLMClient) => { this.llmClient = client; },
+      setPersona: (persona: string, color: string) => { this.persona = persona; this.personaColor = color; },
+      setMood: (mood: string, color: string) => { this.mood = mood; this.moodColor = color; },
+      setActiveTask: (task: string, action: string, color: string) => { this.activeTask = task; this.activeTaskAction = action; this.activeTaskColor = color; }
     });
 
     // Initialize session manager

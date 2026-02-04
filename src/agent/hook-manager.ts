@@ -48,6 +48,12 @@ export interface HookManagerDependencies {
   setTokenCounter(counter: TokenCounter): void;
   /** Set LLM client */
   setLLMClient(client: LLMClient): void;
+  /** Set persona values */
+  setPersona(persona: string, color: string): void;
+  /** Set mood values */
+  setMood(mood: string, color: string): void;
+  /** Set active task values */
+  setActiveTask(task: string, action: string, color: string): void;
   /** Execute a tool by name with parameters (for CALL commands) */
   executeToolByName?(toolName: string, parameters: Record<string, any>): Promise<{ success: boolean; output?: string; error?: string; hookCommands?: any[] }>;
 }
@@ -113,6 +119,7 @@ export class HookManager {
     }
 
     process.env.ZDS_AI_AGENT_PERSONA = persona;
+    this.deps.setPersona(persona, color || "white");
     this.deps.emit('personaChange', { persona, color: color || "white" });
     return { success: true };
   }
@@ -165,7 +172,8 @@ export class HookManager {
     }
 
     process.env.ZDS_AI_AGENT_MOOD = mood;
-    
+    this.deps.setMood(mood, color || "white");
+
     const oldMood = process.env.ZDS_AI_AGENT_MOOD_OLD || "";
     const oldColor = process.env.ZDS_AI_AGENT_MOOD_COLOR_OLD || "white";
     let systemContent: string;
@@ -228,6 +236,7 @@ export class HookManager {
 
     process.env.ZDS_AI_AGENT_ACTIVE_TASK = activeTask;
     process.env.ZDS_AI_AGENT_ACTIVE_TASK_ACTION = action;
+    this.deps.setActiveTask(activeTask, action, color || "white");
 
     const colorStr = color && color !== "white" ? ` (${color})` : "";
     this.deps.messages.push({
