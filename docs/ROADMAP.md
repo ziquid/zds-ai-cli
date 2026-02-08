@@ -105,7 +105,7 @@
    - Added model detection logic to use correct parameter based on model name
    - Applied to both chat() and chatStream() methods in src/grok/client.ts
    - Maintains backward compatibility for older models and non-OpenAI backends
-- [✅] 17: Fixed Dependabot security vulnerabilities blocking v0.1.9 release (Issue #59)
+- [✅] 22: Fixed Dependabot security vulnerabilities blocking v0.1.9 release (Issue #59)
    - Updated @modelcontextprotocol/sdk to 1.26.0 (fixes ReDoS and cross-client data leak)
    - Updated ink to 6.6.0 (resolves lodash prototype pollution)
    - Added qs override to 6.14.1 (fixes DoS vulnerability)
