@@ -31,3 +31,7 @@
    - Moved parseAndAssembleMessage() to execute AFTER PreLLMResponse hook
    - Ensures all USER:* variables (USER:PRE, USER:ENV, USER:RAG, USER:GUIDANCE, USER:POST) are set before message assembly
    - Fixed in both processUserMessage() and processUserMessageStream() methods
+- [✅] 2: Fixed backend model test failure when switching personas with same model (Issue #70)
+   - Only trigger model test when new model differs from current model
+   - Prevents unnecessary test when switching personas that share the same model
+   - Fixes 500 errors from Ollama when attempting to switch from a model to itself

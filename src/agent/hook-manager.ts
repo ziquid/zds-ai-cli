@@ -393,7 +393,7 @@ export class HookManager {
   private async processHookCommands(commands: ReturnType<typeof applyHookCommands>): Promise<boolean> {
     const { applyEnvVariables } = await import('../utils/hook-executor.js');
     const hasBackendChange = commands.backend && commands.baseUrl && commands.apiKeyEnvVar;
-    const hasModelChange = commands.model;
+    const hasModelChange = commands.model && commands.model !== this.deps.getCurrentModel();
 
     // Apply immediate (non-conditional) commands right away
     applyEnvVariables(commands.env);
@@ -583,7 +583,7 @@ export class HookManager {
     };
 
     try {
-      this.deps.getLLMClient().setModel(newModel);
+      await this.deps.getLLMClient().setModel(newModel);
       const { createTokenCounter } = await import("../utils/token-counter.js");
       this.deps.setTokenCounter(createTokenCounter(newModel));
 
