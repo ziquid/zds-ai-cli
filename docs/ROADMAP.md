@@ -2,13 +2,6 @@
 
 ## Version 0.2.0
 
-### Bug Fixes
-
-- [✅] 1: Fixed USER:* prompt variables not being sent to LLM (Issue #68)
-   - Moved parseAndAssembleMessage() to execute AFTER PreLLMResponse hook
-   - Ensures all USER:* variables (USER:PRE, USER:ENV, USER:RAG, USER:GUIDANCE, USER:POST) are set before message assembly
-   - Fixed in both processUserMessage() and processUserMessageStream() methods
-
 ### Features
 
 - [  ] 1: CODE IMPROVEMENTS
@@ -19,7 +12,7 @@
       - Improve error handling and validation
       - Simplify the interface for loading/saving settings
       - Better separation of user vs project settings
-   - [  ] 1.3: Add support for Grok xAI Messages API
+   - [  ] 1.4: Add support for Grok xAI Messages API
 
 - [  ] 2: DATA PERSISTENCE
    - [  ] 2.1: Migrate context storage from JSON files to SQLite database
@@ -31,3 +24,10 @@
 - [  ] 3: MISC IMPROVEMENTS
    - [  ] 3.1: Consider integrating [Agent Skills](https://agentskills.io)
    - [  ] 3.2: Add preUserInput hook
+
+### Bug Fixes
+
+- [✅] 1: Fixed USER:* prompt variables not being sent to LLM (Issue #68)
+   - Moved parseAndAssembleMessage() to execute AFTER PreLLMResponse hook
+   - Ensures all USER:* variables (USER:PRE, USER:ENV, USER:RAG, USER:GUIDANCE, USER:POST) are set before message assembly
+   - Fixed in both processUserMessage() and processUserMessageStream() methods
