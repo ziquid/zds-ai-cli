@@ -2,6 +2,13 @@
 
 ## Version 0.2.0
 
+### Bug Fixes
+
+- [✅] 1: Fixed USER:* prompt variables not being sent to LLM (Issue #68)
+   - Moved parseAndAssembleMessage() to execute AFTER PreLLMResponse hook
+   - Ensures all USER:* variables (USER:PRE, USER:ENV, USER:RAG, USER:GUIDANCE, USER:POST) are set before message assembly
+   - Fixed in both processUserMessage() and processUserMessageStream() methods
+
 ### Features
 
 - [  ] 1: CODE IMPROVEMENTS
