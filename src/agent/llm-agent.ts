@@ -811,21 +811,12 @@ export class LLMAgent extends EventEmitter {
         }
       }
     }
-    const {parsed, assembledMessage} = await this.messageProcessor.parseAndAssembleMessage(messageToSend);
-    const {userEntry, messageContent} = this.messageProcessor.prepareMessageContent(messageType, assembledMessage, parsed, messageToSend, this.llmClient.getSupportsVision());
 
-    this.chatHistory.push(userEntry);
-    if (messageType === "user") {
-      this.messages.push({ role: "user", content: messageContent });
-    } else {
-      this.messages.push({ role: "system", content: typeof messageContent === "string" ? messageContent : messageToSend });
-    }
-    await this.contextManager.emitContextChange();
-
-    const newEntries: ChatEntry[] = [userEntry];
+    const newEntries: ChatEntry[] = [];
     const maxToolRounds = this.maxToolRounds; // Prevent infinite loops
     let toolRounds = 0;
     let consecutiveNonToolResponses = 0;
+    let userEntry: ChatEntry | undefined = undefined;
 
     try {
       // Execute preLLMResponse hook just before LLM call
@@ -858,6 +849,21 @@ export class LLMAgent extends EventEmitter {
           }
         }
       }
+
+      // Parse and assemble message AFTER hooks have set USER:* variables
+      const {parsed, assembledMessage} = await this.messageProcessor.parseAndAssembleMessage(messageToSend);
+      const preparedMessage = this.messageProcessor.prepareMessageContent(messageType, assembledMessage, parsed, messageToSend, this.llmClient.getSupportsVision());
+      userEntry = preparedMessage.userEntry;
+      const messageContent = preparedMessage.messageContent;
+
+      this.chatHistory.push(userEntry);
+      newEntries.push(userEntry);
+      if (messageType === "user") {
+        this.messages.push({ role: "user", content: messageContent });
+      } else {
+        this.messages.push({ role: "system", content: typeof messageContent === "string" ? messageContent : messageToSend });
+      }
+      await this.contextManager.emitContextChange();
 
       // If rephrase or hook returned prefill text, add the assistant message now
       const rephraseText = this.rephraseState?.prefillText;
@@ -1238,7 +1244,7 @@ export class LLMAgent extends EventEmitter {
         // Mark first message as processed
         this.firstMessageProcessed = true;
 
-        return [userEntry, compactEntry];
+        return userEntry ? [userEntry, compactEntry] : [compactEntry];
       }
 
       const errorEntry: ChatEntry = {
@@ -1251,7 +1257,7 @@ export class LLMAgent extends EventEmitter {
       // Mark first message as processed even on error
       this.firstMessageProcessed = true;
 
-      return [userEntry, errorEntry];
+      return userEntry ? [userEntry, errorEntry] : [errorEntry];
     }
   }
 
@@ -1335,30 +1341,6 @@ export class LLMAgent extends EventEmitter {
         }
       }
     }
-    const {parsed, assembledMessage} = await this.messageProcessor.parseAndAssembleMessage(messageToSend);
-    const {userEntry, messageContent} = this.messageProcessor.prepareMessageContent(messageType, assembledMessage, parsed, messageToSend, this.llmClient.getSupportsVision());
-
-    this.chatHistory.push(userEntry);
-    if (messageType === "user") {
-      this.messages.push({ role: "user", content: messageContent });
-    } else {
-      this.messages.push({ role: "system", content: typeof messageContent === "string" ? messageContent : messageToSend });
-    }
-    await this.contextManager.emitContextChange();
-
-    yield {
-      type: "user_message",
-      userEntry: userEntry,
-    };
-
-    // Calculate input tokens
-    let inputTokens = this.tokenCounter.countMessageTokens(
-      this.messages as any
-    );
-    yield {
-      type: "token_count",
-      tokenCount: inputTokens,
-    };
 
     const maxToolRounds = this.maxToolRounds; // Prevent infinite loops
     let toolRounds = 0;
@@ -1367,6 +1349,62 @@ export class LLMAgent extends EventEmitter {
     let consecutiveNonToolResponses = 0;
 
     try {
+      // Execute preLLMResponse hook before assembling message
+      const hookPath = getSettingsManager().getPreLLMResponseHook();
+      if (hookPath) {
+        const hookResult = await executeOperationHook(
+          hookPath,
+          "preLLMResponse",
+          { USER_MESSAGE: message },
+          30000,
+          false,
+          this.getCurrentTokenCount(),
+          this.getMaxContextSize()
+        );
+
+        if (hookResult.approved && hookResult.commands) {
+          const results = applyHookCommands(hookResult.commands);
+          applyEnvVariables(results.env);
+          const seenVars = new Set<string>();
+          for (const {name, value} of results.promptVars) {
+            if (seenVars.has(name)) {
+              Variable.append(name, value);
+            } else {
+              Variable.set(name, value);
+              seenVars.add(name);
+            }
+          }
+          if (results.prefill) {
+            this.messageProcessor.setHookPrefillText(results.prefill);
+          }
+        }
+      }
+
+      // Parse and assemble message AFTER hooks have set USER:* variables
+      const {parsed, assembledMessage} = await this.messageProcessor.parseAndAssembleMessage(messageToSend);
+      const {userEntry, messageContent} = this.messageProcessor.prepareMessageContent(messageType, assembledMessage, parsed, messageToSend, this.llmClient.getSupportsVision());
+
+      this.chatHistory.push(userEntry);
+      if (messageType === "user") {
+        this.messages.push({ role: "user", content: messageContent });
+      } else {
+        this.messages.push({ role: "system", content: typeof messageContent === "string" ? messageContent : messageToSend });
+      }
+      await this.contextManager.emitContextChange();
+
+      yield {
+        type: "user_message",
+        userEntry: userEntry,
+      };
+
+      // Calculate input tokens
+      let inputTokens = this.tokenCounter.countMessageTokens(
+        this.messages as any
+      );
+      yield {
+        type: "token_count",
+        tokenCount: inputTokens,
+      };
       // Always fetch tools fresh - getAllLLMTools() handles lazy refresh internally
       const supportsTools = this.llmClient.getSupportsTools();
 
@@ -1388,30 +1426,6 @@ export class LLMAgent extends EventEmitter {
         }
 
         // Stream response and accumulate
-
-        // Execute preLLMResponse hook just before LLM call
-        const hookPath = getSettingsManager().getPreLLMResponseHook();
-        if (hookPath) {
-          const hookResult = await executeOperationHook(
-            hookPath,
-            "preLLMResponse",
-            { USER_MESSAGE: message },
-            30000,
-            false,
-            this.getCurrentTokenCount(),
-            this.getMaxContextSize()
-          );
-
-          if (hookResult.approved && hookResult.commands) {
-            const results = applyHookCommands(hookResult.commands);
-            for (const {name, value} of results.promptVars) {
-              Variable.set(name, value);
-            }
-            if (results.prefill) {
-              this.messageProcessor.setHookPrefillText(results.prefill);
-            }
-          }
-        }
 
         // If rephrase or hook returned prefill text, add the assistant message now
         const rephraseText = this.rephraseState?.prefillText;
