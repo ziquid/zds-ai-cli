@@ -35,3 +35,7 @@
    - Only trigger model test when new model differs from current model
    - Prevents unnecessary test when switching personas that share the same model
    - Fixes 500 errors from Ollama when attempting to switch from a model to itself
+- [✅] 3: Fixed character loss during typing after Ink 6.6.0 upgrade (Issue #73)
+   - Consolidated three competing useInput hooks into single unified handler
+   - Prevents input events from being split across multiple handlers
+   - Resolves intermittent character loss (every 3rd-4th keystroke) reported after React 19/Ink 6.6.0 upgrade

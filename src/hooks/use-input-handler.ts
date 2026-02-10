@@ -350,21 +350,16 @@ export function useInputHandler({
     disabled: isConfirmationActive,
   });
 
-  // Hook up the actual input handling
+  // Unified input handler - consolidates all input handling in one hook
+  // This prevents character loss from multiple hooks competing for input
   useInput((inputChar: string, key: Key) => {
-    handleInput(inputChar, key);
-  });
-
-  // Additional input handler specifically for abort operations (always active)
-  useInput((inputChar: string, key: Key) => {
-    // Handle ESC and Ctrl+C during streaming/processing (bypass normal input handling)
+    // Priority 1: Abort operations (highest priority - active during processing/streaming)
     if ((isProcessing || isStreaming) && (key.escape || (key.ctrl && inputChar === "c") || inputChar === "\x03")) {
       handleEscape();
+      return;
     }
-  });
 
-  // Additional input handler for rephrase menu number keys
-  useInput((inputChar: string, key: Key) => {
+    // Priority 2: Rephrase menu number keys (1-5)
     if (showRephraseMenu && inputChar >= "1" && inputChar <= "5") {
       const choice = inputChar;
       const result = handleRephraseChoice(choice, agent);
@@ -379,7 +374,11 @@ export function useInputHandler({
         setInput(result.preFillPrompt);
         setCursorPosition(result.preFillPrompt.length);
       }
+      return;
     }
+
+    // Priority 3: Normal input handling (default case)
+    handleInput(inputChar, key);
   });
 
   // Update command suggestions when input changes
