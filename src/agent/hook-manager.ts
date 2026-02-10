@@ -579,7 +579,7 @@ export class HookManager {
       messages: testMessages,
       tools: supportsTools && tools.length > 0 ? tools : undefined,
       temperature: this.deps.temperature,
-      max_tokens: 10
+      max_tokens: 500
     };
 
     try {
@@ -594,7 +594,7 @@ export class HookManager {
         undefined,
         this.deps.temperature,
         undefined,
-        10
+        500
       );
 
       if (!response || !response.choices || response.choices.length === 0) {
@@ -691,7 +691,7 @@ export class HookManager {
         messages: testMessages,
         tools: supportsTools && tools.length > 0 ? tools : undefined,
         temperature: this.deps.temperature,
-        max_tokens: 10
+        max_tokens: 500
       };
 
       const response = await this.deps.getLLMClient().chat(
@@ -701,7 +701,7 @@ export class HookManager {
         undefined,
         this.deps.temperature,
         undefined,
-        10
+        500
       );
 
       if (!response || !response.choices || response.choices.length === 0) {

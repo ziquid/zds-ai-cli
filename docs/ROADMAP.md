@@ -39,3 +39,7 @@
    - Consolidated three competing useInput hooks into single unified handler
    - Prevents input events from being split across multiple handlers
    - Resolves intermittent character loss (every 3rd-4th keystroke) reported after React 19/Ink 6.6.0 upgrade
+- [✅] 4: Increased default max_tokens from 10 to 500 for model compatibility tests (Issue #75)
+   - Updated both testModel() and testBackendModelChange() functions
+   - Allows more comprehensive model validation during persona/backend switches
+   - Provides more representative test responses for compatibility checking
