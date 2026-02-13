@@ -43,3 +43,8 @@
    - Updated both testModel() and testBackendModelChange() functions
    - Allows more comprehensive model validation during persona/backend switches
    - Provides more representative test responses for compatibility checking
+- [✅] 5: Fixed post-llmresponse hook execution order (Issue #80)
+   - Hook now executes AFTER LLM response is saved to context.json
+   - Ensures hooks have immediate access to complete conversation including latest response
+   - Fixed in all three code paths: non-streaming with tools, non-streaming final response, and streaming
+   - Enables hooks to read full conversation state when making decisions

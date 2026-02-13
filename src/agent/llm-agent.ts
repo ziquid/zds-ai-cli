@@ -901,27 +901,6 @@ export class LLMAgent extends EventEmitter {
         currentResponse.choices[0].message = this.messageProcessor.parseXMLToolCalls(currentResponse.choices[0].message);
       }
 
-      // Execute postLLMResponse hook
-      const postLLMResponseHookPath = getSettingsManager().getPostLLMResponseHook();
-      if (postLLMResponseHookPath) {
-        const hookResult = await executeOperationHook(
-          postLLMResponseHookPath,
-          "postLLMResponse",
-          {
-            LLM_RESPONSE: getTextContent(currentResponse.choices?.[0]?.message?.content),
-            TOOL_CALLS: JSON.stringify(currentResponse.choices?.[0]?.message?.tool_calls || [])
-          },
-          30000,
-          false,
-          this.getCurrentTokenCount(),
-          this.getMaxContextSize()
-        );
-
-        if (hookResult.approved && hookResult.commands) {
-          await this.processHookResult(hookResult);
-        }
-      }
-
       // Agent loop - continue until no more tool calls or max rounds reached
       while (toolRounds < maxToolRounds) {
         const assistantMessage = currentResponse.choices?.[0]?.message;
@@ -970,6 +949,12 @@ export class LLMAgent extends EventEmitter {
           newEntries.push(assistantToolCallEntry);
 
           await this.contextManager.emitContextChange();
+
+          // Save context and execute post-llmresponse hook
+          await this.saveContextAndExecutePostLLMResponseHook(
+            assistantMessage.content,
+            assistantMessage.tool_calls
+          );
 
           // Create initial tool call entries to show tools are being executed
           // Use cleanedToolCalls to preserve arguments in chatHistory
@@ -1160,6 +1145,9 @@ export class LLMAgent extends EventEmitter {
                 this.rephraseState.prefillText
               );
             }
+
+            // Save context and execute post-llmresponse hook
+            await this.saveContextAndExecutePostLLMResponseHook(trimmedContent);
           }
 
           // TODO: HACK - This is a temporary fix to prevent duplicate responses.
@@ -1584,27 +1572,6 @@ export class LLMAgent extends EventEmitter {
         // Parse XML tool calls from accumulated message if present
         accumulatedMessage = this.messageProcessor.parseXMLToolCalls(accumulatedMessage);
 
-        // Execute postLLMResponse hook
-        const postLLMResponseHookPath = getSettingsManager().getPostLLMResponseHook();
-        if (postLLMResponseHookPath) {
-          const hookResult = await executeOperationHook(
-            postLLMResponseHookPath,
-            "postLLMResponse",
-            {
-              LLM_RESPONSE: getTextContent(accumulatedMessage.content),
-              TOOL_CALLS: JSON.stringify(accumulatedMessage.tool_calls || [])
-            },
-            30000,
-            false,
-            this.getCurrentTokenCount(),
-            this.getMaxContextSize()
-          );
-
-          if (hookResult.approved && hookResult.commands) {
-            await this.processHookResult(hookResult);
-          }
-        }
-
         // Clean up tool call arguments before adding to conversation history
         // This prevents Ollama from rejecting malformed tool calls on subsequent API calls
         const cleanedToolCalls = accumulatedMessage.tool_calls?.map(toolCall => {
@@ -1636,6 +1603,12 @@ export class LLMAgent extends EventEmitter {
         this.chatHistory.push(assistantEntry);
 
         await this.contextManager.emitContextChange();
+
+        // Save context and execute post-llmresponse hook
+        await this.saveContextAndExecutePostLLMResponseHook(
+          accumulatedMessage.content,
+          accumulatedMessage.tool_calls
+        );
 
         // Update rephrase state if this is a final response (no tool calls)
         if (this.rephraseState && this.rephraseState.newResponseIndex === -1 && (!accumulatedMessage.tool_calls || accumulatedMessage.tool_calls.length === 0)) {
@@ -2300,6 +2273,45 @@ export class LLMAgent extends EventEmitter {
   getBackend(): string {
     // Just return the backend name from the client (no detection)
     return this.llmClient.getBackendName();
+  }
+
+  /**
+   * Save context to disk and execute post-llmresponse hook.
+   * This ensures the hook has access to the complete conversation including the latest response.
+   *
+   * @param content - The assistant message content
+   * @param toolCalls - Optional array of tool calls made by the assistant
+   */
+  private async saveContextAndExecutePostLLMResponseHook(
+    content: any,
+    toolCalls?: any[]
+  ): Promise<void> {
+    // Save context to disk before calling post-llmresponse hook
+    const historyManager = ChatHistoryManager.getInstance();
+    const sessionState = this.sessionManager.getSessionState();
+    historyManager.saveContext(this.systemPrompt, this.chatHistory, sessionState);
+    historyManager.saveMessages(this.messages);
+
+    // Execute postLLMResponse hook (now that response is saved to context.json)
+    const postLLMResponseHookPath = getSettingsManager().getPostLLMResponseHook();
+    if (postLLMResponseHookPath) {
+      const hookResult = await executeOperationHook(
+        postLLMResponseHookPath,
+        "postLLMResponse",
+        {
+          LLM_RESPONSE: getTextContent(content),
+          TOOL_CALLS: JSON.stringify(toolCalls || [])
+        },
+        30000,
+        false,
+        this.getCurrentTokenCount(),
+        this.getMaxContextSize()
+      );
+
+      if (hookResult.approved && hookResult.commands) {
+        await this.processHookResult(hookResult);
+      }
+    }
   }
 
   /**
