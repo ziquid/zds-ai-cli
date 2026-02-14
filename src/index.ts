@@ -419,8 +419,6 @@ async function processPromptHeadless(
     }
 
     // Save updated chat history and messages
-    const { ChatHistoryManager } = await import("./utils/chat-history-manager.js");
-    const historyManager = ChatHistoryManager.getInstance();
     const currentHistory = agent.getChatHistory();
     const currentMessages = agent.getMessages();
     const sessionState = agent.getSessionState();
