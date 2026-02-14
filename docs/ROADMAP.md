@@ -55,3 +55,8 @@
    - Matches UI mode behavior by backing up existing context before starting new session
    - Prevents loss of previous session data when starting tasks
    - Ensures both `zai t` and `zai nc` properly backup context files to context-backup directory
+- [✅] 7: Optional MCP servers with missing environment variables no longer spam warnings (Issue #82)
+   - MCP servers requiring undefined environment variables are silently skipped with a single informative notice
+   - Displays one consolidated warning per session listing all affected servers and their missing variables
+   - Prevents repeated console spam from optional servers like tavily when API keys aren't configured
+   - Server configs with unresolved ${VAR} placeholders are automatically treated as disabled
