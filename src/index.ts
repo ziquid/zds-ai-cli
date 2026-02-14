@@ -371,9 +371,10 @@ async function processPromptHeadless(
     }
 
     // Load existing chat history unless fresh session
+    const { ChatHistoryManager } = await import("./utils/chat-history-manager.js");
+    const historyManager = ChatHistoryManager.getInstance();
+
     if (!fresh) {
-      const { ChatHistoryManager } = await import("./utils/chat-history-manager.js");
-      const historyManager = ChatHistoryManager.getInstance();
       const { systemPrompt, chatHistory: existingHistory, sessionState } = historyManager.loadContext();
       await agent.loadInitialHistory(existingHistory, systemPrompt);
 
@@ -381,6 +382,11 @@ async function processPromptHeadless(
       if (sessionState) {
         await agent.restoreSessionState(sessionState);
       }
+    } else {
+      // Clear existing history file for fresh session (creates backup first)
+      historyManager.clearHistory();
+      // Reset confirmation service session flags
+      confirmationService.resetSession();
     }
 
     // Check if this is a slash command first
@@ -722,6 +728,11 @@ program
               await agent.restoreSessionState(sessionState);
             }
           }
+        } else {
+          // Clear existing history file for fresh session (creates backup first)
+          historyManager.clearHistory();
+          // Reset confirmation service session flags
+          confirmationService.resetSession();
         }
 
         // Helper function to save context

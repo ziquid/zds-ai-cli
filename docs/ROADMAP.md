@@ -48,3 +48,10 @@
    - Ensures hooks have immediate access to complete conversation including latest response
    - Fixed in all three code paths: non-streaming with tools, non-streaming final response, and streaming
    - Enables hooks to read full conversation state when making decisions
+- [✅] 6: Fixed task invocations not saving existing context files to backup (Issue #83)
+   - Both `--prompt` (headless) and `--no-ink` (plain console) modes now call clearHistory() for fresh sessions
+   - Fixed `zai t` (which uses `--prompt` mode) to properly backup context before starting new tasks
+   - Fixed SSH sessions using `--no-ink` to properly backup context before fresh sessions
+   - Matches UI mode behavior by backing up existing context before starting new session
+   - Prevents loss of previous session data when starting tasks
+   - Ensures both `zai t` and `zai nc` properly backup context files to context-backup directory
