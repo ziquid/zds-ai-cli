@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Text } from "ink";
+import React, { useMemo } from "react";
+import { Box, Text, useStdout } from "ink";
 
 interface ChatInputProps {
   input: string;
@@ -14,105 +14,75 @@ export const ChatInput = React.memo(({
   isProcessing,
   isStreaming,
 }: ChatInputProps) => {
-  const beforeCursor = input.slice(0, cursorPosition);
-  const afterCursor = input.slice(cursorPosition);
+  const { stdout } = useStdout();
+  const terminalWidth = stdout?.columns || 80;
 
-  // Handle multiline input display
-  const lines = input.split("\n");
-  const isMultiline = lines.length > 1;
-
-  // Calculate cursor position across lines
-  let currentLineIndex = 0;
-  let currentCharIndex = 0;
-  let totalChars = 0;
-
-  for (let i = 0; i < lines.length; i++) {
-    if (totalChars + lines[i].length >= cursorPosition) {
-      currentLineIndex = i;
-      currentCharIndex = cursorPosition - totalChars;
-      break;
-    }
-    totalChars += lines[i].length + 1; // +1 for newline
-  }
+  // Reserve space for border (2 chars) and padding
+  const boxWidth = Math.max(terminalWidth - 4, 40);
 
   const showCursor = !isProcessing && !isStreaming;
   const borderColor = isProcessing || isStreaming ? "yellow" : "blue";
-  const promptColor = "cyan";
 
+  const displayText = useMemo(() => {
+    const lines = input.split("\n");
+    const isMultiline = lines.length > 1;
 
+    if (!isMultiline) {
+      const beforeCursor = input.slice(0, cursorPosition);
+      const cursorChar = input.slice(cursorPosition, cursorPosition + 1) || " ";
+      const afterCursor = input.slice(cursorPosition + 1);
 
-  if (isMultiline) {
-    return (
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderColor={borderColor}
-        paddingY={0}
-        marginTop={1}
-      >
-        {lines.map((line, index) => {
-          const isCurrentLine = index === currentLineIndex;
-          const promptChar = index === 0 ? "❯" : "│";
+      if (showCursor) {
+        return "\u001b[36m❯ \u001b[0m" + beforeCursor + "\u001b[7m" + cursorChar + "\u001b[27m" + afterCursor;
+      } else {
+        return "\u001b[36m❯ \u001b[0m" + input;
+      }
+    }
 
-          if (isCurrentLine) {
-            const beforeCursorInLine = line.slice(0, currentCharIndex);
-            const cursorChar =
-              line.slice(currentCharIndex, currentCharIndex + 1) || " ";
-            const afterCursorInLine = line.slice(currentCharIndex + 1);
+    // Calculate cursor position across lines
+    let currentLineIndex = 0;
+    let currentCharIndex = 0;
+    let totalChars = 0;
 
-            return (
-              <Box key={index}>
-                <Text color={promptColor}>{promptChar} </Text>
-                <Text>
-                  {beforeCursorInLine}
-                  {showCursor && (
-                    <Text backgroundColor="white" color="black">
-                      {cursorChar}
-                    </Text>
-                  )}
-                  {!showCursor && cursorChar !== " " && cursorChar}
-                  {afterCursorInLine}
-                </Text>
-              </Box>
-            );
-          } else {
-            return (
-              <Box key={index}>
-                <Text color={promptColor}>{promptChar} </Text>
-                <Text>{line}</Text>
-              </Box>
-            );
-          }
-        })}
-      </Box>
-    );
-  }
+    for (let i = 0; i < lines.length; i++) {
+      if (totalChars + lines[i].length >= cursorPosition) {
+        currentLineIndex = i;
+        currentCharIndex = cursorPosition - totalChars;
+        break;
+      }
+      totalChars += lines[i].length + 1;
+    }
 
-  // Single line input box
-  const cursorChar = input.slice(cursorPosition, cursorPosition + 1) || " ";
-  const afterCursorText = input.slice(cursorPosition + 1);
+    // Multiline: build entire display with prompt chars and cursor
+    let result = "";
+    for (let i = 0; i < lines.length; i++) {
+      const promptChar = i === 0 ? "❯" : "│";
+      const line = lines[i];
+      
+      if (i === currentLineIndex && showCursor) {
+        const beforeCursor = line.slice(0, currentCharIndex);
+        const cursorChar = line.slice(currentCharIndex, currentCharIndex + 1) || " ";
+        const afterCursor = line.slice(currentCharIndex + 1);
+        result += "\u001b[36m" + promptChar + " \u001b[0m" + beforeCursor + "\u001b[7m" + cursorChar + "\u001b[27m" + afterCursor;
+      } else {
+        result += "\u001b[36m" + promptChar + " \u001b[0m" + line;
+      }
+      
+      if (i < lines.length - 1) result += "\n";
+    }
+    return result;
+  }, [input, cursorPosition, showCursor]);
 
   return (
     <Box
+      width={boxWidth}
       borderStyle="round"
       borderColor={borderColor}
       paddingX={0}
       paddingY={0}
       marginTop={1}
     >
-      <Box>
-        <Text color={promptColor}>❯ </Text>
-        <Text>
-          {beforeCursor}
-          {showCursor && (
-            <Text backgroundColor="white" color="black">
-              {cursorChar}
-            </Text>
-          )}
-          {!showCursor && cursorChar !== " " && cursorChar}
-          {afterCursorText}
-        </Text>
-      </Box>
+      <Text>{displayText}</Text>
     </Box>
   );
 });

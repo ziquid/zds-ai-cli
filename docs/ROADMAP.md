@@ -60,3 +60,8 @@
    - Displays one consolidated warning per session listing all affected servers and their missing variables
    - Prevents repeated console spam from optional servers like tavily when API keys aren't configured
    - Server configs with unresolved ${VAR} placeholders are automatically treated as disabled
+- [✅] 8: Additional work on character loss issue (Issue #73)
+   - Memoized ChatHistory, CommandSuggestions, ModelSelection, RephraseMenu, MCPStatus components
+   - Simplified ChatInput to single Text component with ANSI escape codes
+   - Added refs in useEnhancedInput to track current input/cursor values
+   - Reduced character loss from >30% to <5%

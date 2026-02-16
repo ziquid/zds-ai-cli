@@ -62,6 +62,12 @@ export function useEnhancedInput({
   const [input, setInputState] = useState("");
   const [cursorPosition, setCursorPositionState] = useState(0);
   const isMultilineRef = useRef(multiline);
+  const inputRef = useRef(input);
+  const cursorRef = useRef(cursorPosition);
+  
+  // Keep refs in sync
+  inputRef.current = input;
+  cursorRef.current = cursorPosition;
   
   const {
     addToHistory,
@@ -295,12 +301,12 @@ export function useEnhancedInput({
     if (inputChar && !key.ctrl && !key.meta) {
       // Normalize carriage returns to newlines (for paste operations)
       const normalizedChar = inputChar.replace(/\r/g, '\n');
-      const result = insertText(input, cursorPosition, normalizedChar);
+      const result = insertText(inputRef.current, cursorRef.current, normalizedChar);
       setInputState(result.text);
       setCursorPositionState(result.position);
       setOriginalInput(result.text);
     }
-  }, [disabled, onSpecialKey, input, cursorPosition, multiline, handleSubmit, navigateHistory, setOriginalInput]);
+  }, [disabled, onSpecialKey, multiline, handleSubmit, navigateHistory, setOriginalInput]);
 
   return {
     input,

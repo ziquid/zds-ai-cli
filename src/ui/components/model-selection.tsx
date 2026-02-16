@@ -12,7 +12,7 @@ interface ModelSelectionProps {
   currentModel: string;
 }
 
-export function ModelSelection({
+export const ModelSelection = React.memo(function ModelSelection({
   models,
   selectedIndex,
   isVisible,
@@ -42,4 +42,4 @@ export function ModelSelection({
       </Box>
     </Box>
   );
-}
+});

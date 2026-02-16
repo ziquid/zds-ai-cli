@@ -265,7 +265,7 @@ const MemoizedChatEntry = React.memo(
 
 MemoizedChatEntry.displayName = "MemoizedChatEntry";
 
-export function ChatHistory({
+export const ChatHistory = React.memo(function ChatHistory({
   entries,
   isConfirmationActive = false,
 }: ChatHistoryProps) {
@@ -279,7 +279,7 @@ export function ChatHistory({
 
   return (
     <Box flexDirection="column">
-      {filteredEntries.slice(-20).map((entry, index) => {
+      {filteredEntries.slice(-11).map((entry, index) => {
         // Ensure timestamp is a Date object (defensive check)
         const timestamp = entry.timestamp instanceof Date
           ? entry.timestamp
@@ -295,4 +295,4 @@ export function ChatHistory({
       })}
     </Box>
   );
-}
+});

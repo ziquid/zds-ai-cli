@@ -7,7 +7,7 @@ interface RephraseMenuProps {
   isVisible: boolean;
 }
 
-export function RephraseMenu({
+export const RephraseMenu = React.memo(function RephraseMenu({
   messageType,
   selectedIndex,
   isVisible,
@@ -45,4 +45,4 @@ export function RephraseMenu({
       </Box>
     </Box>
   );
-}
+});

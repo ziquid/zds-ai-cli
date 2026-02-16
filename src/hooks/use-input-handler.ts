@@ -352,6 +352,7 @@ export function useInputHandler({
 
   // Unified input handler - consolidates all input handling in one hook
   // This prevents character loss from multiple hooks competing for input
+  // Disabled when confirmation dialog or API key input is active
   useInput((inputChar: string, key: Key) => {
     // Priority 1: Abort operations (highest priority - active during processing/streaming)
     if ((isProcessing || isStreaming) && (key.escape || (key.ctrl && inputChar === "c") || inputChar === "\x03")) {
@@ -379,6 +380,8 @@ export function useInputHandler({
 
     // Priority 3: Normal input handling (default case)
     handleInput(inputChar, key);
+  }, {
+    isActive: !isConfirmationActive, // Disable when confirmation dialogs are showing
   });
 
   // Update command suggestions when input changes
@@ -1446,6 +1449,7 @@ Respond with ONLY the commit message, no additional text.`;
     }
 
     setIsProcessing(false);
+    setIsStreaming(false); // Ensure streaming is always reset
     processingStartTime.current = 0;
   };
 

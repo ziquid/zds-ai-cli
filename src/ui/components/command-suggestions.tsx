@@ -25,7 +25,7 @@ export function filterCommandSuggestions<T extends { command: string }>(
     .slice(0, MAX_SUGGESTIONS);
 }
 
-export function CommandSuggestions({
+export const CommandSuggestions = React.memo(function CommandSuggestions({
   suggestions,
   input,
   selectedIndex,
@@ -60,4 +60,4 @@ export function CommandSuggestions({
       </Box>
     </Box>
   );
-}
+});
