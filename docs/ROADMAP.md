@@ -65,3 +65,4 @@
    - Simplified ChatInput to single Text component with ANSI escape codes
    - Added refs in useEnhancedInput to track current input/cursor values
    - Reduced character loss from >30% to <5%
+- [✅] 9: fixed extract-text.sh to only set XDG_ROOT if the Whisper cache is primed

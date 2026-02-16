@@ -1,8 +1,10 @@
 #!/usr/bin/env zsh
 
+ME=$(basename "$0")
+
 # Check for help option
 if [[ "$1" == --help || "$1" == -h ]]; then
-  echo Usage: extract-text '<file>'
+  echo Usage: $ME '<file>'
   echo
   echo Extract text from audio or image files using appropriate tools.
   echo
@@ -25,14 +27,14 @@ fi
 
 # Check if file argument provided
 if [[ -z "$1" ]]; then
-  echo Error: No file specified >&2
+  echo ❌ Error: No file specified >&2
   echo Use --help for usage information >&2
   exit 1
 fi
 
 # Check if file exists
 if [[ ! -f "$1" ]]; then
-  echo Error: File not found: $1 >&2
+  echo ❌ Error: File not found: $1 >&2
   exit 1
 fi
 
@@ -43,7 +45,8 @@ mime_type=$(file --mime-type -b "$1")
 # Route to appropriate extraction tool
 case "$mime_type" in
   audio/*)
-    (id -u zds-ai >/dev/null 2>&1) && typeset -x XDG_CACHE_HOME=~zds-ai/.cache
+    [[ -s ~zds-ai/.cache/whisper/base.pt ]] && \
+      typeset -gx XDG_CACHE_HOME=~zds-ai/.cache
     whisper --output_format txt --model base "$1" 2> /dev/null | \
       grep -vE "^Detecting.language|^Detected.language"
     ;;
@@ -57,7 +60,7 @@ case "$mime_type" in
     fi
     ;;
   *)
-    echo Error: Unsupported file type: "$mime_type" >&2
+    echo ❌ Error: Unsupported file type: $mime_type >&2
     echo Supported types: 'audio/*, image/*' >&2
     exit 1
     ;;

@@ -1,5 +1,7 @@
 #!/usr/bin/env zsh
 
+ME=$(basename "$0")
+
 # Parse arguments for --tone and --move options
 TONE_ARG=
 MOVE_ARG=
@@ -15,8 +17,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --help|-h)
-      NAME=$(basename "$0")
-      echo "Usage: ${NAME} [--tone <tone>] [--move] [<filename.txt> | -]"
+      echo "Usage: ${ME} [--tone <tone>] [--move] [<filename.txt> | -]"
       echo
       echo Arguments:
       echo "  --tone <tone>           Speech tone (slow, fast, romantic, etc.)"
@@ -25,12 +26,12 @@ while [[ $# -gt 0 ]]; do
       echo "  -                       Read text from stdin instead of file"
       echo
       echo Examples:
-      echo "  ${NAME} myfile.txt                       # Basic conversion"
-      echo "  ${NAME} --tone romantic love_letter.txt  # Romantic tone"
-      echo "  ${NAME} --move myfile.txt                # Move to ZAI directory"
-      echo "  ${NAME} --tone slow --move poem.txt      # Slow tone + move"
-      echo "  echo 'Hello' | ${NAME} -                 # Convert stdin text"
-      echo "  ${NAME} --help                           # Show this help message"
+      echo "  ${ME} myfile.txt                       # Basic conversion"
+      echo "  ${ME} --tone romantic love_letter.txt  # Romantic tone"
+      echo "  ${ME} --move myfile.txt                # Move to ZAI directory"
+      echo "  ${ME} --tone slow --move poem.txt      # Slow tone + move"
+      echo "  echo Hello | ${ME} -                   # Convert stdin text"
+      echo "  ${ME} --help                           # Show this help message"
       echo
       echo Encoded speech audio filename will be printed to stdout.
       exit 0
@@ -44,16 +45,12 @@ done
 
 # Build arguments for talking script, including tone and move if specified
 TALKING_ARGS=()
-if [[ -n "$TONE_ARG" ]]; then
-  TALKING_ARGS+=("$TONE_ARG")
-fi
-if [[ -n "$MOVE_ARG" ]]; then
-  TALKING_ARGS+=("$MOVE_ARG")
-fi
+[[ -n "$TONE_ARG" ]] && TALKING_ARGS+=("$TONE_ARG")
+[[ -n "$MOVE_ARG" ]] && TALKING_ARGS+=("$MOVE_ARG")
 
 # Handle stdin input if needed
 if [[ "${@:$#}" == - || -z "$1" ]]; then
-  tmp=$(mktemp $TMPDIR/$(basename $0).$$.XXXXXX).txt
+  tmp=$(mktemp $TMPDIR/$ME.$$.XXXXXX).txt
   cat > $tmp
   TALKING_ARGS+=("${@[1,-2]}" "$tmp")
 else
