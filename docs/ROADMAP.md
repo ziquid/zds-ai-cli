@@ -66,3 +66,8 @@
    - Added refs in useEnhancedInput to track current input/cursor values
    - Reduced character loss from >30% to <5%
 - [✅] 9: fixed extract-text.sh to only set XDG_ROOT if the Whisper cache is primed
+- [✅] 10: Upgraded whisper model from base to small for better transcription accuracy (Issue #97)
+   - Changed speech-to-text model from 'base' (74M params) to 'small' (244M params)
+   - Improves transcription accuracy, especially for proper names, accents, and unclear audio
+   - Trade-off: +323MB model size, ~2.5x slower processing, +1GB memory requirement
+   - Model is cached in the container image (no download required at runtime)

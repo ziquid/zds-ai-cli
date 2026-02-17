@@ -58,7 +58,7 @@ export const ChatInput = React.memo(({
     for (let i = 0; i < lines.length; i++) {
       const promptChar = i === 0 ? "❯" : "│";
       const line = lines[i];
-      
+
       if (i === currentLineIndex && showCursor) {
         const beforeCursor = line.slice(0, currentCharIndex);
         const cursorChar = line.slice(currentCharIndex, currentCharIndex + 1) || " ";
@@ -67,12 +67,11 @@ export const ChatInput = React.memo(({
       } else {
         result += "\u001b[36m" + promptChar + " \u001b[0m" + line;
       }
-      
+
       if (i < lines.length - 1) result += "\n";
     }
     return result;
   }, [input, cursorPosition, showCursor]);
-
   return (
     <Box
       width={boxWidth}

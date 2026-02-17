@@ -45,9 +45,9 @@ mime_type=$(file --mime-type -b "$1")
 # Route to appropriate extraction tool
 case "$mime_type" in
   audio/*)
-    [[ -s ~zds-ai/.cache/whisper/base.pt ]] && \
+    [[ -s ~zds-ai/.cache/whisper/small.pt ]] && \
       typeset -gx XDG_CACHE_HOME=~zds-ai/.cache
-    whisper --output_format txt --model base "$1" 2> /dev/null | \
+    whisper --output_format txt --model small "$1" 2> /dev/null | \
       grep -vE "^Detecting.language|^Detected.language"
     ;;
   image/*)
