@@ -983,10 +983,19 @@ export async function addMCPToolsToLLMTools(baseTools: LLMTool[]): Promise<LLMTo
     return baseTools;
   }
 
+  const config = loadMCPConfig();
+  const denySet = new Set(config.toolDenylist);
+
   const mcpTools = await mcpManager.getTools();
   const debugLogPath = ChatHistoryManager.getDebugLogPath();
   fs.appendFileSync(debugLogPath, `${new Date().toISOString()} -- addMCPToolsToLLMTools: ${mcpTools.length} MCP tools from manager\n`);
-  const LLMMCPTools = mcpTools.map(convertMCPToolToLLMTool);
+  const LLMMCPTools = mcpTools
+    .map(convertMCPToolToLLMTool)
+    .filter((tool) => !denySet.has(tool.function.name));
+
+  if (denySet.size > 0) {
+    fs.appendFileSync(debugLogPath, `${new Date().toISOString()} -- addMCPToolsToLLMTools: ${denySet.size} tools in denylist, ${LLMMCPTools.length} tools after filtering\n`);
+  }
 
   return [...baseTools, ...LLMMCPTools];
 }

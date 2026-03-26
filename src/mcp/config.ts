@@ -3,6 +3,7 @@ import { MCPServerConfig } from "./client.js";
 
 export interface MCPConfig {
   servers: MCPServerConfig[];
+  toolDenylist: string[]; // Tool names to exclude from the LLM tool list
 }
 
 // Track whether we've already warned about missing env vars (one warning per session)
@@ -71,6 +72,12 @@ export function loadMCPConfig(): MCPConfig {
   // Use project settings if available, otherwise fall back to user settings
   const mcpServers = projectSettings.mcpServers || userSettings.mcpServers;
 
+  // Merge denylists: all tools on any list are denied (OR logic)
+  const toolDenylist: string[] = [
+    ...(projectSettings.mcpToolDenylist ?? []),
+    ...(userSettings.mcpToolDenylist ?? []),
+  ];
+
   // Track servers with missing env vars for single consolidated warning
   const serversWithMissingVars: Array<{ name: string; vars: string[] }> = [];
 
@@ -111,7 +118,7 @@ export function loadMCPConfig(): MCPConfig {
     );
   }
 
-  return { servers };
+  return { servers, toolDenylist };
 }
 
 export function saveMCPConfig(config: MCPConfig): void {

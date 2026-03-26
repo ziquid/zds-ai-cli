@@ -13,6 +13,8 @@
       - Simplify the interface for loading/saving settings
       - Better separation of user vs project settings
    - [  ] 1.4: Add support for Grok xAI Messages API
+   - [✅] 1.5: Add MCP tool denylist to exclude unwanted tools from LLM context (Backlog #15)
+   - [  ] 1.6:
 
 - [  ] 2: DATA PERSISTENCE
    - [  ] 2.1: Migrate context storage from JSON files to SQLite database

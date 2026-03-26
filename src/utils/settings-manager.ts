@@ -32,6 +32,7 @@ export interface UserSettings {
   contextEditHelper?: string; // Helper for editing context in text mode (default: $EDITOR or nano)
   contextEditHelperGui?: string; // Helper for editing context in GUI mode (default: open -e on macOS, xdg-open on Linux)
   mcpServers?: Record<string, any>; // MCP server configurations (fallback from user settings)
+  mcpToolDenylist?: string[]; // List of MCP tool names to exclude from the LLM tool list
 }
 
 /**
@@ -41,6 +42,7 @@ export interface UserSettings {
 export interface ProjectSettings {
   model?: string; // Current model for this project
   mcpServers?: Record<string, any>; // MCP server configurations
+  mcpToolDenylist?: string[]; // List of MCP tool names to exclude from the LLM tool list
 }
 
 /**
