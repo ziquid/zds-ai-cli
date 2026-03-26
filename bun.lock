@@ -326,8 +326,6 @@
 
     "@unrs/resolver-binding-darwin-arm64": ["@unrs/resolver-binding-darwin-arm64@1.11.1", "", { "os": "darwin", "cpu": "arm64" }, ""],
 
-    "@zds-ai/cli": ["@zds-ai/cli@./zds-ai-cli-0.2.0-alpha.4.tgz", { "dependencies": { "@modelcontextprotocol/sdk": "^1.26.0", "axios": "^1.13.4", "cfonts": "^3.3.1", "chalk": "^5.6.2", "commander": "^12.1.0", "dotenv": "^16.6.1", "enquirer": "^2.4.1", "fs-extra": "^11.3.3", "ink": "^6.6.0", "ink-spawn": "^0.1.4", "marked": "^15.0.12", "marked-terminal": "^7.3.0", "openai": "^5.23.2", "prompts": "^2.4.2", "react": "^19.0.0", "ripgrep-node": "^1.0.0", "tiktoken": "^1.0.22" }, "bin": { "zai-cli": "dist/index.js", "encode-speech.sh": "dist/bin/encode-speech.sh", "extract-text.sh": "dist/bin/extract-text.sh", "fastcaption.sh": "dist/bin/fastcaption.sh", "generate_image_sd.sh": "dist/bin/generate_image_sd.sh", "joycaption.sh": "dist/bin/joycaption.sh", "read_xlsx.py": "dist/bin/read_xlsx.py", "talking-agents.sh": "dist/bin/talking-agents.sh" } }],
-
     "accepts": ["accepts@2.0.0", "", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, ""],
 
     "acorn": ["acorn@8.15.0", "", { "bin": "bin/acorn" }, "sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg=="],
