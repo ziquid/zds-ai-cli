@@ -3,6 +3,7 @@ import { MCPManager, MCPTool } from "../mcp/client.js";
 import { loadMCPConfig } from "../mcp/config.js";
 import { ChatHistoryManager } from "../utils/chat-history-manager.js";
 import fs from "fs";
+import { execSync } from "child_process";
 
 const BASE_LLM_TOOLS: LLMTool[] = [
   {
@@ -1000,6 +1001,81 @@ export async function addMCPToolsToLLMTools(baseTools: LLMTool[]): Promise<LLMTo
   return [...baseTools, ...LLMMCPTools];
 }
 
+
+function getSkillzAsLLMTools(): LLMTool[] {
+  let json: string;
+  try {
+    json = execSync('mzke -s skill list json', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 5000 });
+  } catch {
+    return [];
+  }
+  let parsed: any;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return [];
+  }
+
+  const tools: LLMTool[] = [];
+
+  for (const skill of (parsed.skillz || [])) {
+    tools.push({
+      type: 'function',
+      function: {
+        name: `skill__${skill.name}`,
+        description: skill.description || `Run the ${skill.name} skill`,
+        parameters: {
+          type: 'object',
+          properties: {
+            arg: { type: 'string', description: 'Optional argument to pass to the skill' },
+          },
+          required: [],
+        },
+      },
+    });
+  }
+
+  const docz: any[] = parsed.docz || [];
+  if (docz.length > 0) {
+    const docNames = docz.map((d: any) => d.name).join(', ');
+    tools.push({
+      type: 'function',
+      function: {
+        name: 'skill__read_doc',
+        description: `Read a ZDS documentation page. Available docs: ${docNames}`,
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'Name of the doc to read' },
+          },
+          required: ['name'],
+        },
+      },
+    });
+  }
+
+  const defz: any[] = parsed.defz || [];
+  if (defz.length > 0) {
+    const termNames = defz.map((d: any) => d.term).join(', ');
+    tools.push({
+      type: 'function',
+      function: {
+        name: 'skill__define_term',
+        description: `Look up a ZDS term definition. Available terms: ${termNames}`,
+        parameters: {
+          type: 'object',
+          properties: {
+            term: { type: 'string', description: 'Term to define' },
+          },
+          required: ['term'],
+        },
+      },
+    });
+  }
+
+  return tools;
+}
+
 export async function getAllLLMTools(): Promise<LLMTool[]> {
   const manager = getMCPManager();
   // Wait for servers to initialize before returning tools
@@ -1008,5 +1084,7 @@ export async function getAllLLMTools(): Promise<LLMTool[]> {
   } catch (error) {
     // Ignore initialization errors, just proceed with whatever tools we have
   }
-  return await addMCPToolsToLLMTools(LLM_TOOLS);
+  let tools = await addMCPToolsToLLMTools(LLM_TOOLS);
+  tools = [...tools, ...getSkillzAsLLMTools()];
+  return tools;
 }

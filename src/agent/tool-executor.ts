@@ -3,6 +3,7 @@ import { ToolResult } from "../types/index.js";
 import { getAllLLMTools, getMCPManager } from "../grok/tools.js";
 import { executeToolApprovalHook, executePreToolCallHook, executePostToolCallHook } from "../utils/hook-executor.js";
 import { getSettingsManager } from "../utils/settings-manager.js";
+import { execSync } from "child_process";
 
 /** Maximum attempts to parse nested JSON strings */
 const MAX_JSON_PARSE_ATTEMPTS = 5;
@@ -382,7 +383,36 @@ export class ToolExecutor {
         if (toolName.startsWith("mcp__")) {
           return await this.executeMCPTool(toolName, args);
         }
+        if (toolName.startsWith("skill__")) {
+          return this.executeSkillTool(toolName, args);
+        }
         return { success: false, error: `Unknown tool: ${toolName}` };
+    }
+  }
+
+  private shellQuote(s: string): string {
+    return "'" + s.replace(/'/g, "'\\''") + "'";
+  }
+
+  private executeSkillTool(toolName: string, args: any): ToolResult {
+    try {
+      let cmd: string;
+      if (toolName === 'skill__read_doc') {
+        cmd = `mzke skill read ${this.shellQuote(String(args.name || ''))}`;
+      } else if (toolName === 'skill__define_term') {
+        cmd = `mzke skill def ${this.shellQuote(String(args.term || ''))}`;
+      } else {
+        const skillName = toolName.replace(/^skill__/, '');
+        cmd = args.arg
+          ? `mzke skill ${skillName} ${this.shellQuote(String(args.arg))}`
+          : `mzke skill ${skillName}`;
+      }
+      const output = execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 30000 });
+      return { success: true, output: output.trim() || 'Success' };
+    } catch (error: any) {
+      const stderr = error.stderr?.toString().trim();
+      const stdout = error.stdout?.toString().trim();
+      return { success: false, error: stderr || stdout || `Skill execution failed: ${error.message}` };
     }
   }
 
