@@ -1,4 +1,5 @@
 import { LLMClient } from "../grok/client.js";
+import { GrokResponsesClient, shouldUseResponsesAPI } from "../grok/responses-client.js";
 import { TokenCounter, createTokenCounter } from "../utils/token-counter.js";
 import { loadMCPConfig } from "../mcp/config.js";
 import { initializeMCPServers } from "../grok/tools.js";
@@ -11,7 +12,7 @@ import { getSettingsManager } from "../utils/settings-manager.js";
  */
 export interface SessionManagerDependencies {
   /** Get LLM client instance */
-  getLLMClient(): LLMClient;
+  getLLMClient(): LLMClient | GrokResponsesClient;
   /** Get token counter instance */
   getTokenCounter(): TokenCounter;
   /** Get API key environment variable name */
@@ -37,7 +38,7 @@ export interface SessionManagerDependencies {
   /** Emit events */
   emit(event: string, data: any): void;
   /** Set LLM client */
-  setLLMClient(client: LLMClient): void;
+  setLLMClient(client: LLMClient | GrokResponsesClient): void;
   /** Set token counter */
   setTokenCounter(counter: TokenCounter): void;
   /** Set API key environment variable */
@@ -124,7 +125,9 @@ export class SessionManager {
         if (apiKey) {
           // Create new client with restored configuration
           const model = state.model || this.deps.getCurrentModel();
-          const newClient = new LLMClient(apiKey, model, state.baseUrl, state.backend);
+          const newClient = shouldUseResponsesAPI(state.backend)
+            ? new GrokResponsesClient(apiKey, model, state.baseUrl, state.backend)
+            : new LLMClient(apiKey, model, state.baseUrl, state.backend);
           this.deps.setLLMClient(newClient);
           this.deps.setApiKeyEnvVar(state.apiKeyEnvVar);
 

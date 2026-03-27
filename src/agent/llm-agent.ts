@@ -1,4 +1,5 @@
 import { LLMClient, LLMMessage, LLMToolCall } from "../grok/client.js";
+import { GrokResponsesClient, shouldUseResponsesAPI } from "../grok/responses-client.js";
 import type { ChatCompletionContentPart } from "openai/resources/chat/completions.js";
 import {
   LLM_TOOLS,
@@ -195,7 +196,7 @@ export interface StreamingChunk {
  * @extends EventEmitter Emits 'contextChange' events for token usage updates
  */
 export class LLMAgent extends EventEmitter {
-  private llmClient: LLMClient;
+  private llmClient: LLMClient | GrokResponsesClient;
   private textEditor: TextEditorTool;
   private morphEditor: MorphEditorTool | null;
   private zsh: ZshTool;
@@ -374,7 +375,12 @@ export class LLMAgent extends EventEmitter {
     this.maxTokens = maxTokens ?? manager.getMaxTokens();
     // Get display name from environment (set by zai/helpers)
     const displayName = process.env.GROK_BACKEND_DISPLAY_NAME;
-    this.llmClient = new LLMClient(apiKey, modelToUse, baseURL, displayName);
+    // Use GrokResponsesClient when GROK_USE_RESPONSES_API=true and backend is grok
+    if (shouldUseResponsesAPI(displayName ?? '')) {
+      this.llmClient = new GrokResponsesClient(apiKey, modelToUse, baseURL, displayName);
+    } else {
+      this.llmClient = new LLMClient(apiKey, modelToUse, baseURL, displayName);
+    }
 
     // Set apiKeyEnvVar based on backend name
     const backendName = this.llmClient.getBackendName().toUpperCase();
@@ -426,7 +432,7 @@ export class LLMAgent extends EventEmitter {
       emit: (event: string, data: any) => this.emit(event, data),
       setApiKeyEnvVar: (value: string) => { this.apiKeyEnvVar = value; },
       setTokenCounter: (counter: TokenCounter) => { this.tokenCounter = counter; },
-      setLLMClient: (client: LLMClient) => { this.llmClient = client; },
+      setLLMClient: (client: LLMClient | GrokResponsesClient) => { this.llmClient = client; },
       setPersona: (persona: string, color: string) => { this.persona = persona; this.personaColor = color; },
       setMood: (mood: string, color: string) => { this.mood = mood; this.moodColor = color; },
       setActiveTask: (task: string, action: string, color: string) => { this.activeTask = task; this.activeTaskAction = action; this.activeTaskColor = color; }
@@ -447,7 +453,7 @@ export class LLMAgent extends EventEmitter {
       getActiveTaskColor: () => this.activeTaskColor,
       getCurrentModel: () => this.getCurrentModel(),
       emit: (event: string, data: any) => this.emit(event, data),
-      setLLMClient: (client: LLMClient) => { this.llmClient = client; },
+      setLLMClient: (client: LLMClient | GrokResponsesClient) => { this.llmClient = client; },
       setTokenCounter: (counter: TokenCounter) => { this.tokenCounter = counter; },
       setApiKeyEnvVar: (value: string) => { this.apiKeyEnvVar = value; },
       setPersona: (persona: string, color: string) => { this.persona = persona; this.personaColor = color; },

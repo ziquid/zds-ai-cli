@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
 import { LLMClient } from "../grok/client.js";
+import { GrokResponsesClient, shouldUseResponsesAPI } from "../grok/responses-client.js";
 import { TokenCounter } from "../utils/token-counter.js";
 import { getSettingsManager } from "../utils/settings-manager.js";
 import { executeOperationHook, applyHookCommands } from "../utils/hook-executor.js";
@@ -23,7 +24,7 @@ interface CallContext {
  */
 export interface HookManagerDependencies {
   /** Get LLM client for API calls */
-  getLLMClient(): LLMClient;
+  getLLMClient(): LLMClient | GrokResponsesClient;
   /** Get token counter for model operations */
   getTokenCounter(): TokenCounter;
   /** API key environment variable name */
@@ -47,7 +48,7 @@ export interface HookManagerDependencies {
   /** Set token counter */
   setTokenCounter(counter: TokenCounter): void;
   /** Set LLM client */
-  setLLMClient(client: LLMClient): void;
+  setLLMClient(client: LLMClient | GrokResponsesClient): void;
   /** Set persona values */
   setPersona(persona: string, color: string): void;
   /** Set mood values */
@@ -658,7 +659,9 @@ export class HookManager {
 
       newModel = model || this.deps.getCurrentModel();
       modelChanged = newModel !== previousModel;
-      const newClient = new LLMClient(apiKey, newModel, baseUrl, backend);
+      const newClient = shouldUseResponsesAPI(backend)
+        ? new GrokResponsesClient(apiKey, newModel, baseUrl, backend)
+        : new LLMClient(apiKey, newModel, baseUrl, backend);
       this.deps.setLLMClient(newClient);
       this.deps.setApiKeyEnvVar(apiKeyEnvVar);
 
