@@ -67,6 +67,7 @@ const DEFAULT_PROJECT_SETTINGS: Partial<ProjectSettings> = {
  */
 export class SettingsManager {
   private static instance: SettingsManager;
+  private static customUserSettingsPath: string | null = null;
 
   private userSettingsPath: string;
   private userMcpServersPath: string;
@@ -74,9 +75,16 @@ export class SettingsManager {
   private projectSettingsPath: string;
   private projectMcpServersPath: string;
 
+  /**
+   * Set a custom user settings file path (must be called before getInstance)
+   */
+  static setCustomUserSettingsPath(filePath: string): void {
+    SettingsManager.customUserSettingsPath = filePath;
+  }
+
   private constructor() {
-    // User settings path: ~/.zds-ai/cli-settings.json
-    this.userSettingsPath = path.join(os.homedir(), ".zds-ai", "cli-settings.json");
+    // User settings path: custom or ~/.zds-ai/cli-settings.json
+    this.userSettingsPath = SettingsManager.customUserSettingsPath || path.join(os.homedir(), ".zds-ai", "cli-settings.json");
 
     // User mcp servers path: ~/.zds-ai/mcp.json
     this.userMcpServersPath = path.join(os.homedir(), ".zds-ai", "mcp.json");

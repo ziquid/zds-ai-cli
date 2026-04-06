@@ -523,6 +523,10 @@ program
     "--show-context-stats",
     "display token usage stats for the specified context file and exit"
   )
+  .option(
+    "-s, --settings <file>",
+    "path to user settings file (default: ~/.zds-ai/cli-settings.json)"
+  )
   .argument("[message...]", "Initial message to send to the AI")
   .allowExcessArguments(true)
   .action(async (message, options) => {
@@ -536,6 +540,12 @@ program
         );
         process.exit(1);
       }
+    }
+
+    // Set custom user settings path if provided
+    if (options.settings) {
+      const { SettingsManager } = await import('./utils/settings-manager.js');
+      SettingsManager.setCustomUserSettingsPath(options.settings);
     }
 
     // Handle --show-all-tools flag
