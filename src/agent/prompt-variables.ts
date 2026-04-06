@@ -65,7 +65,7 @@ export class VariableDef {
     if (def) return def;
 
     // Try to find in PROMPT_VARS template
-    const predefined = PROMPT_VARS.find(v => v.name === name);
+    const predefined = getPROMPT_VARS().find(v => v.name === name);
     if (predefined) {
       VariableDef.definitions.set(name, predefined);
       return predefined;
@@ -86,7 +86,7 @@ export class VariableDef {
    */
   static getAllDefinitions(): VariableDef[] {
     // Load all PROMPT_VARS into definitions (later entries override earlier)
-    for (const promptVar of PROMPT_VARS) {
+    for (const promptVar of getPROMPT_VARS()) {
       VariableDef.definitions.set(promptVar.name, promptVar);
     }
 
@@ -110,7 +110,7 @@ export class VariableDef {
    * @returns True if defined in EXTERNAL_VARS
    */
   static isExplicit(name: string): boolean {
-    return EXTERNAL_VARS.some(v => v.name === name);
+    return loadVariableDefinitions().some(v => v.name === name);
   }
 }
 
@@ -561,25 +561,34 @@ const INTRINSIC_VARS: VariableDef[] = [
 
 /**
  * Load variable definitions from ~/.zds-ai/cli-vars.yml via SettingsManager
- * Returns array of VariableDef instances
+ * Lazy-loaded to avoid creating SettingsManager singleton at import time
+ * (which would ignore any custom settings path set later)
  */
-function loadVariableDefinitions(): VariableDef[] {
-  const settingsManager = SettingsManager.getInstance();
-  const varDefs = settingsManager.loadVariableDefinitions();
-  return varDefs.map(varDef => new VariableDef(varDef));
-}
+let _externalVarsLoaded = false;
+let _externalVars: VariableDef[] = [];
 
-/**
- * External (YAML) variable definitions
- * Loaded from ~/.zds-ai/cli-vars.yml
- */
-const EXTERNAL_VARS: VariableDef[] = loadVariableDefinitions();
+function loadVariableDefinitions(): VariableDef[] {
+  if (!_externalVarsLoaded) {
+    _externalVarsLoaded = true;
+    try {
+      const settingsManager = SettingsManager.getInstance();
+      const varDefs = settingsManager.loadVariableDefinitions();
+      _externalVars = varDefs.map(varDef => new VariableDef(varDef));
+    } catch (error) {
+      _externalVars = [];
+    }
+  }
+  return _externalVars;
+}
 
 /**
  * Predefined variable definitions for the prompt system
  * Intrinsic definitions provide defaults, external definitions override
+ * Getter ensures external vars are lazy-loaded
  */
-const PROMPT_VARS: VariableDef[] = [
-  ...INTRINSIC_VARS,
-  ...EXTERNAL_VARS,
-];
+function getPROMPT_VARS(): VariableDef[] {
+  return [
+    ...INTRINSIC_VARS,
+    ...loadVariableDefinitions(),
+  ];
+}

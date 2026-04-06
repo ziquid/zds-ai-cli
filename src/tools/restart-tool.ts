@@ -1,6 +1,7 @@
 import { ToolResult } from "../types/index.js";
+import { ToolDiscovery, getHandledToolNames } from "./tool-discovery.js";
 
-export class RestartTool {
+export class RestartTool implements ToolDiscovery {
   /**
    * Restart the application by exiting with code 51
    */
@@ -21,5 +22,9 @@ export class RestartTool {
         output: error instanceof Error ? error.message : "Unknown error during restart"
       };
     }
+  }
+
+  getHandledToolNames(): string[] {
+    return getHandledToolNames(this);
   }
 }

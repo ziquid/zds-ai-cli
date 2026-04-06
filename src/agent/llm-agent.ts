@@ -400,6 +400,7 @@ export class LLMAgent extends EventEmitter {
     this.internetTool = new InternetTool();
     this.imageTool = new ImageTool();
     this.fileConversionTool = new FileConversionTool();
+    this.audioTool = new AudioTool();
     this.textEditor.setAgent(this); // Give text editor access to agent for context awareness
     this.introspect.setAgent(this); // Give introspect access to agent for tool class info
     this.clearCacheTool.setAgent(this); // Give clearCache access to agent

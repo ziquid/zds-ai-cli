@@ -564,6 +564,7 @@ Usage: ${usagePercent}%`;
         });
 
         // Sort classes and display their discovered methods
+        const classifiedTools = new Set<string>();
         const sortedClasses = toolClassInfo.sort((a: any, b: any) => a.className.localeCompare(b.className));
         sortedClasses.forEach(({ className, methods }: any) => {
           if (methods.length > 0) {
@@ -571,9 +572,20 @@ Usage: ${usagePercent}%`;
             methods.sort().forEach((methodName: string) => {
               const description = toolDescriptions.get(methodName) || 'No description available';
               output += `    ${methodName} (${description})\n`;
+              classifiedTools.add(methodName);
             });
           }
         });
+
+        // Show unclassified internal tools (e.g., skill__ tools)
+        const unclassifiedTools = internalTools.filter(t => !classifiedTools.has(t.function.name) && t.function.name.startsWith('skill__'));
+        if (unclassifiedTools.length > 0) {
+          output += `  Skillz:\n`;
+          unclassifiedTools.sort((a, b) => a.function.name.localeCompare(b.function.name)).forEach(tool => {
+            const displayName = tool.function.name.replace(/^skill__/, '');
+            output += `    ${displayName} (${tool.function.description})\n`;
+          });
+        }
 
         // Show MCP tools grouped by server
         if (mcpTools.length > 0) {

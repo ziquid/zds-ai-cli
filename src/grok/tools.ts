@@ -1009,6 +1009,10 @@ function getSkillzAsLLMTools(): LLMTool[] {
   } catch {
     return [];
   }
+  // Strip non-JSON prefix lines (tput warnings, make errors, etc.)
+  const jsonStart = json.indexOf('{');
+  if (jsonStart < 0) return [];
+  json = json.substring(jsonStart);
   let parsed: any;
   try {
     parsed = JSON.parse(json);

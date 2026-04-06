@@ -598,7 +598,7 @@ program
 
       // Headless mode: process prompt and exit
       if (options.prompt !== undefined) {
-        let prompt = options.prompt;
+        let prompt = typeof options.prompt === 'string' ? options.prompt : '';
 
         // If prompt is empty or just whitespace, read from stdin
         if (!prompt || !prompt.trim()) {

@@ -1,6 +1,7 @@
 import { ToolResult } from "../types/index.js";
+import { ToolDiscovery, getHandledToolNames } from "./tool-discovery.js";
 
-export class ClearCacheTool {
+export class ClearCacheTool implements ToolDiscovery {
   private agent: any; // Reference to the LLMAgent
   private confirmationCode: string | null = null;
 
@@ -88,5 +89,9 @@ Example: clearCache("${this.confirmationCode}")`,
         output: error instanceof Error ? error.message : "Unknown error during cache clear"
       };
     }
+  }
+
+  getHandledToolNames(): string[] {
+    return getHandledToolNames(this);
   }
 }
