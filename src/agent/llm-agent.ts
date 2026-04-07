@@ -255,7 +255,7 @@ export class LLMAgent extends EventEmitter {
    *
    * @private
    */
-  private buildToolCallEntry(toolCall: { function: { arguments?: string }; [key: string]: any }): ChatEntry {
+  private buildToolCallEntry(toolCall: LLMToolCall): ChatEntry {
     let rationale: string = '';
     try {
       const parsedArgs = JSON.parse(toolCall.function.arguments || '{}');

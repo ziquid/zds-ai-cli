@@ -4,7 +4,7 @@ export interface ToolResult {
   error?: string;
   data?: any;
   displayOutput?: string; // Optional user-facing display text (if different from output)
-  rationale: string; // Why the tool was called (stripped from args, saved for logging/context)
+  rationale?: string; // Why the tool was called (stripped from args, saved for logging/context)
 }
 
 export interface Tool {
