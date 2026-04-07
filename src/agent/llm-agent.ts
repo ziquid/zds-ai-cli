@@ -255,6 +255,21 @@ export class LLMAgent extends EventEmitter {
    *
    * @private
    */
+  private buildToolCallEntry(toolCall: { function: { arguments?: string }; [key: string]: any }): ChatEntry {
+    let rationale: string = '';
+    try {
+      const parsedArgs = JSON.parse(toolCall.function.arguments || '{}');
+      rationale = typeof parsedArgs.rationale === 'string' ? parsedArgs.rationale : '';
+    } catch { /* ignore parse errors */ }
+    return {
+      type: "tool_call",
+      content: "Executing...",
+      timestamp: new Date(),
+      toolCall: toolCall,
+      metadata: { rationale },
+    };
+  }
+
   private async cleanupIncompleteToolCalls(): Promise<void> {
     const lastMessage = this.messages[this.messages.length - 1];
     if (lastMessage?.role === "assistant" && lastMessage.tool_calls) {
@@ -966,12 +981,7 @@ export class LLMAgent extends EventEmitter {
           // Create initial tool call entries to show tools are being executed
           // Use cleanedToolCalls to preserve arguments in chatHistory
           cleanedToolCalls.forEach((toolCall) => {
-            const toolCallEntry: ChatEntry = {
-              type: "tool_call",
-              content: "Executing...",
-              timestamp: new Date(),
-              toolCall: toolCall,
-            };
+            const toolCallEntry = this.buildToolCallEntry(toolCall);
             this.chatHistory.push(toolCallEntry);
             newEntries.push(toolCallEntry);
           });
@@ -1009,13 +1019,15 @@ export class LLMAgent extends EventEmitter {
             );
 
             if (entryIndex !== -1) {
+              const prevEntry = this.chatHistory[entryIndex];
               const updatedEntry: ChatEntry = {
-                ...this.chatHistory[entryIndex],
+                ...prevEntry,
                 type: "tool_result",
                 content: result.success
                   ? result.output || "Success"
                   : result.error || "Error occurred",
                 toolResult: result,
+                metadata: { ...(prevEntry.metadata || {}), rationale: result.rationale },
               };
               this.chatHistory[entryIndex] = updatedEntry;
 
@@ -1643,13 +1655,7 @@ export class LLMAgent extends EventEmitter {
           // Add tool_call entries to chatHistory so they persist through UI sync
           // Use cleanedToolCalls to preserve arguments in chatHistory
           cleanedToolCalls.forEach((toolCall) => {
-            const toolCallEntry: ChatEntry = {
-              type: "tool_call",
-              content: "Executing...",
-              timestamp: new Date(),
-              toolCall: toolCall,
-            };
-            this.chatHistory.push(toolCallEntry);
+            this.chatHistory.push(this.buildToolCallEntry(toolCall));
           });
 
           // Execute tools
@@ -1706,13 +1712,15 @@ export class LLMAgent extends EventEmitter {
               (entry) => entry.type === "tool_call" && entry.toolCall?.id === toolCall.id
             );
             if (entryIndex !== -1) {
+              const prevEntry = this.chatHistory[entryIndex];
               this.chatHistory[entryIndex] = {
-                ...this.chatHistory[entryIndex],
+                ...prevEntry,
                 type: "tool_result",
                 content: result.success
                   ? (result.output?.trim() || "Success")
                   : (result.error?.trim() || "Error occurred"),
                 toolResult: result,
+                metadata: { ...(prevEntry.metadata || {}), rationale: result.rationale },
               };
             }
 

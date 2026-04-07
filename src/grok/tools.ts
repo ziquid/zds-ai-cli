@@ -1001,11 +1001,35 @@ export async function addMCPToolsToLLMTools(baseTools: LLMTool[]): Promise<LLMTo
   return [...baseTools, ...LLMMCPTools];
 }
 
+/**
+ * Inject a required `rationale` parameter into every tool's schema.
+ * The LLM must provide a rationale for every tool call; it is stripped
+ * before the tool executes but is exposed to hooks and saved in context.json.
+ */
+function injectRationaleIntoTools(tools: LLMTool[]): LLMTool[] {
+  return tools.map(tool => ({
+    ...tool,
+    function: {
+      ...tool.function,
+      parameters: {
+        ...tool.function.parameters,
+        properties: {
+          rationale: {
+            type: 'string',
+            description: 'Why this tool is being called and what outcome is expected.',
+          },
+          ...(tool.function.parameters.properties || {}),
+        },
+        required: ['rationale', ...(tool.function.parameters.required || [])],
+      },
+    },
+  }));
+}
 
 function getSkillzAsLLMTools(): LLMTool[] {
   let json: string;
   try {
-    json = execSync('mzke -s skill list json', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], timeout: 5000 });
+    json = execSync('mzke -s skill list json', { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
   } catch {
     return [];
   }
@@ -1090,5 +1114,5 @@ export async function getAllLLMTools(): Promise<LLMTool[]> {
   }
   let tools = await addMCPToolsToLLMTools(LLM_TOOLS);
   tools = [...tools, ...getSkillzAsLLMTools()];
-  return tools;
+  return injectRationaleIntoTools(tools);
 }

@@ -208,6 +208,12 @@ export class ToolExecutor {
         return { success: false, error: validationError };
       }
 
+      // Extract rationale before passing to the tool — the tool doesn't need it,
+      // but it is forwarded to hooks (via PARAM env vars) and saved in context.json.
+      const rationale: string = typeof args.rationale === 'string' ? args.rationale : '';
+      const argsForTool = { ...args };
+      delete argsForTool.rationale;
+
       const isTaskTool = ['startActiveTask', 'transitionActiveTaskStatus', 'stopActiveTask'].includes(toolCall.function.name);
       const settings = getSettingsManager();
       const toolApprovalHook = settings.getToolApprovalHook();
@@ -216,7 +222,7 @@ export class ToolExecutor {
         const approvalResult = await executeToolApprovalHook(
           toolApprovalHook,
           toolCall.function.name,
-          args,
+          args,  // pass args WITH rationale so hooks get PARAM_RATIONALE
           30000,
           this.agent.getCurrentTokenCount(),
           this.agent.getMaxContextSize()
@@ -235,7 +241,7 @@ export class ToolExecutor {
         await this.agent.processHookResult(approvalResult);
       }
 
-      // Execute preToolCall hook
+      // Execute preToolCall hook (pass args WITH rationale so PARAM_RATIONALE is set)
       const preToolCallHookPath = settings.getPreToolCallHook();
       if (preToolCallHookPath && !isTaskTool) {
         const hookResult = await executePreToolCallHook(
@@ -251,9 +257,10 @@ export class ToolExecutor {
         await this.agent.processHookResult(hookResult);
       }
 
-      const result = await this.executeToolByName(toolCall.function.name, args);
+      const result = await this.executeToolByName(toolCall.function.name, argsForTool);
+      result.rationale = rationale;
 
-      // Execute postToolCall hook
+      // Execute postToolCall hook (pass args WITH rationale so PARAM_RATIONALE is set)
       const postToolCallHookPath = settings.getPostToolCallHook();
       if (postToolCallHookPath && !isTaskTool) {
         const hookResult = await executePostToolCallHook(
