@@ -590,8 +590,9 @@ export class LLMAgent extends EventEmitter {
    * @param systemPrompt - Optional system prompt (will generate if not provided)
    */
   async loadInitialHistory(history: ChatEntry[], systemPrompt?: string): Promise<void> {
-    // Load chatHistory (no system messages in new architecture)
-    this.chatHistory = history;
+    // Load chatHistory mutating in place to preserve ContextManager's array reference
+    this.chatHistory.length = 0;
+    this.chatHistory.push(...history);
 
     // Set system prompt if provided, otherwise generate one
     if (systemPrompt) {
@@ -2362,9 +2363,9 @@ export class LLMAgent extends EventEmitter {
     // Backup current context to timestamped files
     historyManager.backupHistory();
 
-    // Clear the context
-    this.chatHistory = [];
-    this.messages = [];
+    // Clear in place to preserve ContextManager's array references
+    this.chatHistory.length = 0;
+    this.messages.length = 0;
     this.contextManager.resetContextWarnings();
     this.firstMessageProcessed = false;
 

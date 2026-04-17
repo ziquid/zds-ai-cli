@@ -166,9 +166,16 @@ export async function processSlashCommand(
       const sessionState = agent.getSessionState();
       historyManager.saveContext(agent.getSystemPrompt(), agent.getChatHistory(), sessionState);
 
-      // In headless mode, output confirmation
       if (isHeadless) {
         console.log(message);
+      } else {
+        const confirmEntry: ChatEntry = {
+          type: "assistant",
+          content: message,
+          timestamp: new Date(),
+        };
+        addChatEntry(confirmEntry);
+        if (clearInput) clearInput();
       }
 
       return true;
