@@ -972,12 +972,6 @@ export class LLMAgent extends EventEmitter {
 
           await this.contextManager.emitContextChange();
 
-          // Save context and execute post-llmresponse hook
-          await this.saveContextAndExecutePostLLMResponseHook(
-            assistantMessage.content,
-            assistantMessage.tool_calls
-          );
-
           // Create initial tool call entries to show tools are being executed
           // Use cleanedToolCalls to preserve arguments in chatHistory
           cleanedToolCalls.forEach((toolCall) => {
@@ -1623,12 +1617,6 @@ export class LLMAgent extends EventEmitter {
 
         await this.contextManager.emitContextChange();
 
-        // Save context and execute post-llmresponse hook
-        await this.saveContextAndExecutePostLLMResponseHook(
-          accumulatedMessage.content,
-          accumulatedMessage.tool_calls
-        );
-
         // Update rephrase state if this is a final response (no tool calls)
         if (this.rephraseState && this.rephraseState.newResponseIndex === -1 && (!accumulatedMessage.tool_calls || accumulatedMessage.tool_calls.length === 0)) {
           const newResponseIndex = this.chatHistory.length - 1;
@@ -1791,7 +1779,11 @@ export class LLMAgent extends EventEmitter {
 
           // Continue the loop to get the next response (which might have more tool calls)
         } else {
-          // No tool calls, we're done
+          // No tool calls -- this is the final response, fire the hook once
+          await this.saveContextAndExecutePostLLMResponseHook(
+            accumulatedMessage.content,
+            accumulatedMessage.tool_calls
+          );
           break;
         }
       }
