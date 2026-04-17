@@ -1,18 +1,10 @@
 #!/usr/bin/env zsh
 # generate_image_sd.sh - Generate image via SD API, save base64/JSON/PNG
 
-# Find config from ZDS_AI_AGENT_CONFIG_FILE
-[[ ! -s "$ZDS_AI_AGENT_CONFIG_FILE" ]] && echo Failed to find config file $ZDS_AI_AGENT_CONFIG_FILE >&2 && exit 1
-[[ ! -s "$ZDS_AI_AGENT_LOG_FILE" ]] && echo Failed to find log file $ZDS_AI_AGENT_LOG_FILE >&2 && exit 1
-[[ -z "$ZDS_AI_AGENT_SESSION" ]] && echo Failed to validate agent session >&2 && exit 1
-[[ -z "$ZDS_AI_AGENT_HOME_DIR" ]] && echo Failed to validate agent home dir >&2 && exit 1
-LOGFILE=${ZDS_AI_AGENT_LOG_FILE}
-
-# Load environment variables
+# Load environment variables early (needed for help text defaults)
 [[ -f ~/.env ]] && source ~/.env
 
 # Defaults - only MOVE_DIR is optional
-ENDPOINT="$ZDS_AI_IMAGE_ENDPOINT/txt2img"
 WIDTH=480
 HEIGHT=720
 SAMPLER="DPM++ 2M Karras"
@@ -20,11 +12,7 @@ CFG_SCALE=5.0
 MODEL_CHECKPOINT=cyberrealisticPony_v130.safetensors
 STEPS=30
 
-( date
-printf "%s %s\n" "$0" "$@"
-[[ -n "$ZDS_AI_AGENT_SESSION" ]] || set | grep ^ZDS_AI
-echo ) >> $LOGFILE
-
+# Show help before any env validation so it works outside agent context
 if [[ "$1" == --help || "$1" == -h || $# -eq 0 ]]; then
   PROG_NAME=$(basename "$0")
   echo "Usage: ${PROG_NAME} <prompt> [<negative prompt>] [options...]"
@@ -62,6 +50,19 @@ if [[ "$1" == --help || "$1" == -h || $# -eq 0 ]]; then
    echo "  ${PROG_NAME} --get-lora-details 'RealisticSkinv2_ponyv6_loraplus'"
   exit 0
 fi
+
+# Agent environment validation (skipped for --help above)
+[[ ! -s "$ZDS_AI_AGENT_CONFIG_FILE" ]] && echo Failed to find config file $ZDS_AI_AGENT_CONFIG_FILE >&2 && exit 1
+[[ ! -s "$ZDS_AI_AGENT_LOG_FILE" ]] && echo Failed to find log file $ZDS_AI_AGENT_LOG_FILE >&2 && exit 1
+[[ -z "$ZDS_AI_AGENT_SESSION" ]] && echo Failed to validate agent session >&2 && exit 1
+[[ -z "$ZDS_AI_AGENT_HOME_DIR" ]] && echo Failed to validate agent home dir >&2 && exit 1
+LOGFILE=${ZDS_AI_AGENT_LOG_FILE}
+ENDPOINT="$ZDS_AI_IMAGE_ENDPOINT/txt2img"
+
+( date
+printf "%s %s\n" "$0" "$@"
+[[ -n "$ZDS_AI_AGENT_SESSION" ]] || set | grep ^ZDS_AI
+echo ) >> $LOGFILE
 
 # set -x
 
