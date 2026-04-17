@@ -942,7 +942,6 @@ export async function initializeMCPServers(debugLogFile?: string): Promise<void>
     } catch (error) {
       // Only log to debug file if configured, otherwise suppress
       if (debugLogFile) {
-        const fs = await import('fs');
         const message = `Failed to initialize MCP server ${serverConfig.name}: ${error}\n`;
         fs.appendFileSync(debugLogFile, message);
       }
