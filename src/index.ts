@@ -144,10 +144,10 @@ async function saveCommandLineSettings(
 // Show all available tools (internal and MCP)
 async function showAllTools(debugLogFile?: string): Promise<void> {
   try {
-    // Ensure MCP servers are initialized
-    const { getMCPManager } = await import('./grok/tools.js');
+    // Ensure MCP servers are initialized (passing debugLogFile so the log is created)
+    const { getMCPManager, initializeMCPServers } = await import('./grok/tools.js');
+    await initializeMCPServers(debugLogFile);
     const mcpManager = getMCPManager();
-    await mcpManager.ensureServersInitialized();
 
     // Create a temporary agent and use introspect tool (no startup hook needed for listing tools)
     const { LLMAgent } = await import('./agent/llm-agent.js');

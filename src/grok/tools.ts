@@ -3,6 +3,7 @@ import { MCPManager, MCPTool } from "../mcp/client.js";
 import { loadMCPConfig } from "../mcp/config.js";
 import { ChatHistoryManager } from "../utils/chat-history-manager.js";
 import fs from "fs";
+import path from "path";
 import { execSync } from "child_process";
 
 const BASE_LLM_TOOLS: LLMTool[] = [
@@ -933,6 +934,13 @@ export async function initializeMCPServers(debugLogFile?: string): Promise<void>
 
   // Pass debug log file to manager for per-server stream redirection
   if (debugLogFile) {
+    // Create the log directory and file immediately so it exists even when
+    // no MCP servers are configured or no errors occur during initialization.
+    const logDir = path.dirname(path.resolve(debugLogFile));
+    if (!fs.existsSync(logDir)) {
+      fs.mkdirSync(logDir, { recursive: true });
+    }
+    fs.appendFileSync(debugLogFile, `${new Date().toISOString()} -- MCP debug log started\n`);
     manager.setDebugLogFile(debugLogFile);
   }
 

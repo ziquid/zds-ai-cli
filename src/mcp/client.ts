@@ -78,7 +78,7 @@ export class MCPManager extends EventEmitter {
       if (this.debugLogFile && transportConfig.type === 'stdio') {
         transportConfig = {
           ...transportConfig,
-          debugLogFile: `${this.debugLogFile}.${config.name}.log`
+          debugLogFile: this.debugLogFile
         };
       }
 
