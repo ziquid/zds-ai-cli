@@ -546,86 +546,18 @@ Usage: ${usagePercent}%`;
           };
         }
 
-        const allTools = await getAllLLMTools();
-
-        // Separate internal and MCP tools
-        const internalTools = allTools.filter(tool => !tool.function.name.startsWith("mcp__"));
-        const mcpTools = allTools.filter(tool => tool.function.name.startsWith("mcp__"));
-
-        let output = "Internal Tools:\n";
-
-        // Get tool class info from agent
-        const toolClassInfo = this.agent?.getToolClassInfo() || [];
-
-        // Create a mapping from tool names to descriptions
-        const toolDescriptions = new Map<string, string>();
-        internalTools.forEach(tool => {
-          toolDescriptions.set(tool.function.name, tool.function.description);
-        });
-
-        // Sort classes and display their discovered methods
-        const classifiedTools = new Set<string>();
-        const sortedClasses = toolClassInfo.sort((a: any, b: any) => a.className.localeCompare(b.className));
-        sortedClasses.forEach(({ className, methods }: any) => {
-          if (methods.length > 0) {
-            output += `  ${className}:\n`;
-            methods.sort().forEach((methodName: string) => {
-              const description = toolDescriptions.get(methodName) || 'No description available';
-              output += `    ${methodName} (${description})\n`;
-              classifiedTools.add(methodName);
-            });
-          }
-        });
-
-        // Show unclassified internal tools (e.g., skill__ tools)
-        const unclassifiedTools = internalTools.filter(t => !classifiedTools.has(t.function.name) && t.function.name.startsWith('skill__'));
-        if (unclassifiedTools.length > 0) {
-          output += `  Skillz:\n`;
-          unclassifiedTools.sort((a, b) => a.function.name.localeCompare(b.function.name)).forEach(tool => {
-            const displayName = tool.function.name.replace(/^skill__/, '');
-            output += `    ${displayName} (${tool.function.description})\n`;
-          });
-        }
-
-        // Show MCP tools grouped by server
-        if (mcpTools.length > 0) {
-          output += "\n";
-          const toolsByServer = new Map<string, string[]>();
-
-          mcpTools.forEach(tool => {
-            // Extract server name from tool name (format: mcp__serverName__toolName)
-            const parts = tool.function.name.split('__');
-            if (parts.length >= 3 && parts[0] === 'mcp') {
-              const serverName = parts[1];
-              const toolName = parts.slice(2).join('__');
-
-              if (!toolsByServer.has(serverName)) {
-                toolsByServer.set(serverName, []);
-              }
-              toolsByServer.get(serverName)!.push(toolName);
-            }
-          });
-
-          // Sort servers alphabetically
-          const sortedServers = Array.from(toolsByServer.keys()).sort();
-
-          sortedServers.forEach(serverName => {
-            output += `MCP Tools (${serverName}):\n`;
-            const tools = toolsByServer.get(serverName)!.sort();
-            tools.forEach(toolName => {
-              output += `  ${toolName} (mcp:${serverName})\n`;
-            });
-          });
-        }
-
-        if (internalTools.length === 0 && mcpTools.length === 0) {
-          output += "No tools available.\n";
-        }
+        const sections = await this.generateToolSections();
+        const parts: string[] = [];
+        if (sections.base) parts.push(sections.base);
+        if (sections.skillz) parts.push(sections.skillz);
+        if (sections.mcp) parts.push(sections.mcp);
+        const output = parts.join("\n") || "No tools available.\n";
+        const totalCount = sections.baseCount + sections.skillzCount + sections.mcpCount;
 
         return {
           success: true,
           output,
-          displayOutput: `Found ${internalTools.length} internal and ${mcpTools.length} MCP tools`
+          displayOutput: `Found ${sections.baseCount} base, ${sections.skillzCount} skillz, ${sections.mcpCount} MCP tools (${totalCount} total)`
         };
       }
 
@@ -639,6 +571,86 @@ Usage: ${usagePercent}%`;
         error: `Error during introspection: ${error.message}`
       };
     }
+  }
+
+  /**
+   * Generate tool listing sections separated by type (base, skillz, mcp).
+   * Used by buildSystemMessage() to populate APP:TOOLS:BASE/MCP/SKILLZ variables.
+   */
+  async generateToolSections(): Promise<{
+    base: string; baseCount: number;
+    skillz: string; skillzCount: number;
+    mcp: string; mcpCount: number;
+  }> {
+    const allTools = await getAllLLMTools();
+
+    const baseInternalTools = allTools.filter(t =>
+      !t.function.name.startsWith("mcp__") && !t.function.name.startsWith("skill__")
+    );
+    const skillzTools = allTools.filter(t => t.function.name.startsWith("skill__"));
+    const mcpTools = allTools.filter(t => t.function.name.startsWith("mcp__"));
+
+    // Build base section
+    let base = "";
+    const toolClassInfo = this.agent?.getToolClassInfo() || [];
+    const toolDescriptions = new Map<string, string>();
+    baseInternalTools.forEach(tool => {
+      toolDescriptions.set(tool.function.name, tool.function.description);
+    });
+
+    const classifiedTools = new Set<string>();
+    const sortedClasses = [...toolClassInfo].sort((a: any, b: any) => a.className.localeCompare(b.className));
+    sortedClasses.forEach(({ className, methods }: any) => {
+      if (methods.length > 0) {
+        base += `${className}:\n`;
+        methods.sort().forEach((methodName: string) => {
+          const description = toolDescriptions.get(methodName) || 'No description available';
+          base += `  ${methodName} (${description})\n`;
+          classifiedTools.add(methodName);
+        });
+      }
+    });
+
+    // Build skillz section
+    let skillz = "";
+    if (skillzTools.length > 0) {
+      skillz += "Skillz:\n";
+      skillzTools.sort((a, b) => a.function.name.localeCompare(b.function.name)).forEach(tool => {
+        const displayName = tool.function.name.replace(/^skill__/, '');
+        skillz += `  ${displayName} (${tool.function.description})\n`;
+      });
+    }
+
+    // Build MCP section
+    let mcp = "";
+    if (mcpTools.length > 0) {
+      const toolsByServer = new Map<string, string[]>();
+      mcpTools.forEach(tool => {
+        const parts = tool.function.name.split('__');
+        if (parts.length >= 3 && parts[0] === 'mcp') {
+          const serverName = parts[1];
+          const toolName = parts.slice(2).join('__');
+          if (!toolsByServer.has(serverName)) toolsByServer.set(serverName, []);
+          toolsByServer.get(serverName)!.push(toolName);
+        }
+      });
+      const sortedServers = Array.from(toolsByServer.keys()).sort();
+      sortedServers.forEach(serverName => {
+        mcp += `MCP Tools (${serverName}):\n`;
+        toolsByServer.get(serverName)!.sort().forEach(toolName => {
+          mcp += `  ${toolName} (mcp:${serverName})\n`;
+        });
+      });
+    }
+
+    return {
+      base: base.trim(),
+      baseCount: baseInternalTools.length,
+      skillz: skillz.trim(),
+      skillzCount: skillzTools.length,
+      mcp: mcp.trim(),
+      mcpCount: mcpTools.length
+    };
   }
 
   getHandledToolNames(): string[] {

@@ -543,6 +543,9 @@ const INTRINSIC_VARS: VariableDef[] = [
     weight: 70,
     persists: true
   }),
+  new VariableDef({ name: "APP:TOOLS:BASE", weight: 71, persists: true }),
+  new VariableDef({ name: "APP:TOOLS:MCP", weight: 72, persists: true }),
+  new VariableDef({ name: "APP:TOOLS:SKILLZ", weight: 73, persists: true }),
   new VariableDef({
     name: "APP:TIMESTAMP:UTC",
     weight: 81,

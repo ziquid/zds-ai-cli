@@ -549,12 +549,11 @@ export class LLMAgent extends EventEmitter {
    * instructions, tool descriptions, and current context information.
    */
   async buildSystemMessage(): Promise<void> {
-    // Generate dynamic tool list using introspect tool
-    const toolsResult = await this.introspect.introspect("tools");
-    const toolsSection = toolsResult.success ? toolsResult.output : "Tools: Unknown";
-
-    // Set APP:TOOLS variable
-    Variable.set("APP:TOOLS", toolsSection);
+    // Generate tool sections split by type for separate APP:TOOLS:* variables
+    const sections = await this.introspect.generateToolSections();
+    Variable.set("APP:TOOLS:BASE", sections.base || "");
+    Variable.set("APP:TOOLS:MCP", sections.mcp || "");
+    Variable.set("APP:TOOLS:SKILLZ", sections.skillz || "");
 
     // Note: System prompt rendering moved to renderSystemMessage()
     // which is called just before each LLM API call to ensure
