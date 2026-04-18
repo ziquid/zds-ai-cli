@@ -1041,9 +1041,10 @@ function getSkillzAsLLMTools(): LLMTool[] {
     return [];
   }
   // Strip non-JSON prefix lines (tput warnings, make errors, etc.)
+  // Also strip \r so CRLF line endings in skill .md files don't break JSON.parse
   const jsonStart = json.indexOf('{');
   if (jsonStart < 0) return [];
-  json = json.substring(jsonStart);
+  json = json.substring(jsonStart).replace(/\r/g, '');
   let parsed: any;
   try {
     parsed = JSON.parse(json);

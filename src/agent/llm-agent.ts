@@ -217,6 +217,7 @@ export class LLMAgent extends EventEmitter {
   private tokenCounter: TokenCounter;
   private abortController: AbortController | null = null;
   private mcpInitialized: boolean = false;
+  private mcpInitPromise: Promise<void> | null = null;
   private maxToolRounds: number;
   private temperature: number;
   private maxTokens: number | undefined;
@@ -498,8 +499,8 @@ export class LLMAgent extends EventEmitter {
       clearCache: () => this.clearCache()
     });
 
-    // Initialize MCP servers if configured
-    this.initializeMCP(debugLogFile);
+    // Initialize MCP servers if configured (store promise so buildSystemMessage can await it)
+    this.mcpInitPromise = this.initializeMCP(debugLogFile);
 
     // System message will be set after async initialization
     this.messages.push({
@@ -549,6 +550,10 @@ export class LLMAgent extends EventEmitter {
    * instructions, tool descriptions, and current context information.
    */
   async buildSystemMessage(): Promise<void> {
+    // Wait for MCP init to complete so serverTools is populated before generateToolSections runs
+    if (this.mcpInitPromise) {
+      try { await this.mcpInitPromise; } catch {}
+    }
     // Generate tool sections split by type for separate APP:TOOLS:* variables
     const sections = await this.introspect.generateToolSections();
     Variable.set("APP:TOOLS:BASE", sections.base || "");
@@ -706,19 +711,16 @@ export class LLMAgent extends EventEmitter {
    * @private
    */
   private async initializeMCP(debugLogFile?: string): Promise<void> {
-    // Initialize MCP in the background without blocking
-    Promise.resolve().then(async () => {
-      try {
-        const config = loadMCPConfig();
-        if (config.servers.length > 0) {
-          await initializeMCPServers(debugLogFile);
-        }
-      } catch (error) {
-        console.warn("MCP initialization failed:", error);
-      } finally {
-        this.mcpInitialized = true;
+    try {
+      const config = loadMCPConfig();
+      if (config.servers.length > 0) {
+        await initializeMCPServers(debugLogFile);
       }
-    });
+    } catch (error) {
+      console.warn("MCP initialization failed:", error);
+    } finally {
+      this.mcpInitialized = true;
+    }
   }
 
   /**
