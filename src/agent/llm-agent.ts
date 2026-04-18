@@ -25,6 +25,7 @@ import {
   IntrospectTool,
   ClearCacheTool,
   CharacterTool,
+  TaskManagementTool,
   TaskTool,
   InternetTool,
   ImageTool,
@@ -206,6 +207,7 @@ export class LLMAgent extends EventEmitter {
   private introspect: IntrospectTool;
   private clearCacheTool: ClearCacheTool;
   private characterTool: CharacterTool;
+  private taskManagementTool: TaskManagementTool;
   private taskTool: TaskTool;
   private internetTool: InternetTool;
   private imageTool: ImageTool;
@@ -412,6 +414,7 @@ export class LLMAgent extends EventEmitter {
     this.clearCacheTool = new ClearCacheTool();
     this.restartTool = new RestartTool();
     this.characterTool = new CharacterTool();
+    this.taskManagementTool = new TaskManagementTool();
     this.taskTool = new TaskTool();
     this.internetTool = new InternetTool();
     this.imageTool = new ImageTool();
@@ -432,7 +435,7 @@ export class LLMAgent extends EventEmitter {
       this, this.textEditor, this.morphEditor, this.zsh, this.search,
       this.env, this.introspect, this.clearCacheTool, this.restartTool,
       this.characterTool, this.taskTool, this.internetTool, this.imageTool,
-      this.fileConversionTool, this.audioTool
+      this.fileConversionTool, this.audioTool, this.taskManagementTool
     );
 
     // Initialize hook manager

@@ -10,6 +10,7 @@ export { IntrospectTool } from "./introspect-tool.js";
 export { MorphEditorTool } from "./morph-editor.js";
 export { RestartTool } from "./restart-tool.js";
 export { SearchTool } from "./search.js";
+export { TaskManagementTool } from "./task-management-tool.js";
 export { TaskTool } from "./task-tool.js";
 export { TextEditorTool } from "./text-editor.js";
 export { ZshTool } from "./zsh.js";

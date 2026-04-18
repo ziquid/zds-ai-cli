@@ -82,7 +82,9 @@ export class ToolExecutor {
     /** File conversion tool */
     private fileConversionTool: any,
     /** Audio processing tool */
-    private audioTool: any
+    private audioTool: any,
+    /** Task management tool (verification artifacts, etc.) */
+    private taskManagementTool: any
   ) {}
 
   /**
@@ -386,6 +388,10 @@ export class ToolExecutor {
         return await this.fileConversionTool.readXlsx(args.filename, args.sheetName, args.outputFormat, args.output);
       case "listXlsxSheets":
         return await this.fileConversionTool.listXlsxSheets(args.filename);
+      case "createVerificationArtifact":
+        return await this.taskManagementTool.createVerificationArtifact(
+          args.status, args.task, args.artifact, args.checks, args.issues, args.meta
+        );
       default:
         if (toolName.startsWith("mcp__")) {
           return await this.executeMCPTool(toolName, args);

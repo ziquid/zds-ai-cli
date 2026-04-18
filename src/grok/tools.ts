@@ -874,6 +874,54 @@ const BASE_LLM_TOOLS: LLMTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "createVerificationArtifact",
+      description: "Create a verification artifact documenting task completion status, checks performed, and any issues found.  The artifact is stored internally for the session.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: {
+            type: "string",
+            enum: ["VERIFIED", "FAILED"],
+            description: "Overall verification status",
+          },
+          task: {
+            type: "object",
+            description: "Task completion metadata",
+            properties: {
+              task_complete: { type: "boolean", description: "Whether the task is complete" },
+              success_criteria_met: { type: "boolean", description: "Whether all success criteria were met" },
+              external_verification_ready: { type: "boolean", description: "Whether the artifact is ready for external verification" },
+              task_type: { type: "string", description: "Type of task (optional)" },
+              task_id: { type: "string", description: "Task identifier (optional)" },
+            },
+            required: ["task_complete", "success_criteria_met", "external_verification_ready"],
+          },
+          artifact: {
+            type: "object",
+            description: "The artifact being verified (any structured data)",
+          },
+          checks: {
+            type: "object",
+            description: "Named boolean checks performed during verification (at least one required)",
+            additionalProperties: { type: "boolean" },
+          },
+          issues: {
+            type: "array",
+            description: "List of issues found during verification",
+            items: { type: "string" },
+          },
+          meta: {
+            type: "object",
+            description: "Optional metadata about the verification",
+          },
+        },
+        required: ["status", "task", "artifact", "checks", "issues"],
+      },
+    },
+  },
 ];
 
 // Morph Fast Apply tool (conditional)
