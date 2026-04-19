@@ -167,9 +167,11 @@ export class GrokResponsesClient {
     };
   }
 
+  private readonly MAX_TOOLS = 200;
+
   /** Convert LLMTool array to Responses API function tool format. */
   private toResponsesTools(tools: LLMTool[]): any[] {
-    return tools.map((t) => ({
+    return tools.slice(0, this.MAX_TOOLS).map((t) => ({
       type: "function",
       name: t.function.name,
       description: t.function.description,

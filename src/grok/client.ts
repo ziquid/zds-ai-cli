@@ -276,6 +276,13 @@ export class LLMClient {
       allTools.splice(128);
     }
 
+    // xAI Grok (Chat Completions path) has a hard limit of 200 tools per request
+    const isGrok = this.client.baseURL?.includes('x.ai') || this.backendName.toLowerCase() === 'grok';
+    if (isGrok && allTools.length > 200) {
+      console.error(`Grok tool limit: ${allTools.length} tools exceeds maximum of 200.  Trimming to 200 tools.`);
+      allTools.splice(200);
+    }
+
     // Only include tools if the model supports them AND tools are provided
     if (this.supportsTools && allTools.length > 0) {
       requestPayload.tools = allTools;
@@ -496,6 +503,13 @@ export class LLMClient {
     if (isOpenAI && allTools.length > 128) {
       console.error(`OpenAI tool limit: ${allTools.length} tools exceeds maximum of 128.  Trimming to 128 tools (base tools prioritized over MCP tools).`);
       allTools.splice(128);
+    }
+
+    // xAI Grok (Chat Completions path) has a hard limit of 200 tools per request
+    const isGrok = this.client.baseURL?.includes('x.ai') || this.backendName.toLowerCase() === 'grok';
+    if (isGrok && allTools.length > 200) {
+      console.error(`Grok tool limit: ${allTools.length} tools exceeds maximum of 200.  Trimming to 200 tools.`);
+      allTools.splice(200);
     }
 
     // Only include tools if the model supports them
