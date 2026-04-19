@@ -2,9 +2,6 @@ import { ToolResult } from "../types/index.js";
 import { ToolDiscovery, getHandledToolNames } from "./tool-discovery.js";
 
 export class RestartTool implements ToolDiscovery {
-  /**
-   * Restart the application by exiting with code 51
-   */
   async restart(): Promise<ToolResult> {
     try {
       // Exit with code 51 to signal restart

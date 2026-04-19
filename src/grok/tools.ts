@@ -1223,6 +1223,12 @@ function getSkillzAsLLMTools(): LLMTool[] {
   return tools;
 }
 
+let _headlessMode = false;
+
+export function setHeadlessMode(val: boolean): void {
+  _headlessMode = val;
+}
+
 export async function getAllLLMTools(): Promise<LLMTool[]> {
   const manager = getMCPManager();
   // Wait for servers to initialize before returning tools
@@ -1231,7 +1237,10 @@ export async function getAllLLMTools(): Promise<LLMTool[]> {
   } catch (error) {
     // Ignore initialization errors, just proceed with whatever tools we have
   }
-  let tools = await addMCPToolsToLLMTools(LLM_TOOLS);
+  const baseTools = _headlessMode
+    ? LLM_TOOLS.filter(t => t.function.name !== "restart")
+    : LLM_TOOLS;
+  let tools = await addMCPToolsToLLMTools(baseTools);
   tools = [...tools, ...getSkillzAsLLMTools()];
   return injectRationaleIntoTools(tools);
 }

@@ -76,10 +76,11 @@ export async function createLLMAgent(
   debugLogFile?: string,
   runStartupHook: boolean = true,
   temperature?: number,
-  maxTokens?: number
+  maxTokens?: number,
+  isHeadless?: boolean
 ): Promise<LLMAgent> {
   const startupHookOutput = runStartupHook ? await executeStartupHook() : undefined;
-  const agent = new LLMAgent(apiKey, baseURL, model, maxToolRounds, debugLogFile, startupHookOutput, temperature, maxTokens);
+  const agent = new LLMAgent(apiKey, baseURL, model, maxToolRounds, debugLogFile, startupHookOutput, temperature, maxTokens, isHeadless);
   await agent.initialize();
   return agent;
 }

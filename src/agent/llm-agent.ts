@@ -7,6 +7,7 @@ import {
   getAllLLMTools,
   getMCPManager,
   initializeMCPServers,
+  setHeadlessMode,
 } from "../grok/tools.js";
 import { loadMCPConfig } from "../mcp/config.js";
 import { ChatHistoryManager } from "../utils/chat-history-manager.js";
@@ -212,7 +213,7 @@ export class LLMAgent extends EventEmitter {
   private internetTool: InternetTool;
   private imageTool: ImageTool;
   private fileConversionTool: FileConversionTool;
-  private restartTool: RestartTool;
+  private restartTool: RestartTool | null = null;
   private audioTool: AudioTool;
   private chatHistory: ChatEntry[] = [];
   private messages: LLMMessage[] = [];
@@ -382,7 +383,8 @@ export class LLMAgent extends EventEmitter {
     debugLogFile?: string,
     startupHookOutput?: string,
     temperature?: number,
-    maxTokens?: number
+    maxTokens?: number,
+    isHeadless?: boolean
   ) {
     super();
     const manager = getSettingsManager();
@@ -412,7 +414,11 @@ export class LLMAgent extends EventEmitter {
     this.env = new EnvTool();
     this.introspect = new IntrospectTool();
     this.clearCacheTool = new ClearCacheTool();
-    this.restartTool = new RestartTool();
+    if (isHeadless) {
+      setHeadlessMode(true);
+    } else {
+      this.restartTool = new RestartTool();
+    }
     this.characterTool = new CharacterTool();
     this.taskManagementTool = new TaskManagementTool();
     this.taskManagementTool.setAgent(this);

@@ -218,7 +218,7 @@ async function handleCommitAndPushHeadless(
 ): Promise<void> {
   try {
     const { createLLMAgent } = await import('./utils/startup-hook.js');
-    const agent = await createLLMAgent(apiKey, baseURL, model, maxToolRounds, debugLogFile, true, temperature);
+    const agent = await createLLMAgent(apiKey, baseURL, model, maxToolRounds, debugLogFile, true, temperature, undefined, true);
     currentAgent = agent; // Store reference for cleanup
 
     // Configure confirmation service for headless mode (auto-approve all operations)
@@ -354,7 +354,7 @@ async function processPromptHeadless(
 ): Promise<void> {
   try {
     const { createLLMAgent } = await import('./utils/startup-hook.js');
-    const agent = await createLLMAgent(apiKey, baseURL, model, maxToolRounds, debugLogFile, true, temperature, maxTokens);
+    const agent = await createLLMAgent(apiKey, baseURL, model, maxToolRounds, debugLogFile, true, temperature, maxTokens, true);
     currentAgent = agent; // Store reference for cleanup
 
     // Configure confirmation service for headless mode

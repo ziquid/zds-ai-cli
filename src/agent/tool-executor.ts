@@ -334,6 +334,7 @@ export class ToolExecutor {
       case "clearCache":
         return await this.clearCacheTool.clearCache(args.confirmationCode);
       case "restart":
+        if (!this.restartTool) return { success: false, error: "restart is not available in headless mode", output: "restart is not available in headless mode" };
         return await this.restartTool.restart();
       case "setPersona":
         return await this.characterTool.setPersona(args.persona, args.color);
