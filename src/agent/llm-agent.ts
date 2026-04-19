@@ -415,6 +415,7 @@ export class LLMAgent extends EventEmitter {
     this.restartTool = new RestartTool();
     this.characterTool = new CharacterTool();
     this.taskManagementTool = new TaskManagementTool();
+    this.taskManagementTool.setAgent(this);
     this.taskTool = new TaskTool();
     this.internetTool = new InternetTool();
     this.imageTool = new ImageTool();

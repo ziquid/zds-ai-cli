@@ -922,6 +922,69 @@ const BASE_LLM_TOOLS: LLMTool[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "finishTaskAndQuit",
+      description: "Signal successful task completion and exit.  Requires a prior createVerificationArtifact call.",
+      parameters: {
+        type: "object",
+        properties: {
+          reasoning: {
+            type: "string",
+            description: "Why the task is considered finished",
+          },
+          details: {
+            type: "string",
+            description: "Optional additional details about the completion",
+          },
+        },
+        required: ["reasoning"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "escalateAndQuit",
+      description: "Escalate the task to a human and exit.  Requires a prior createVerificationArtifact call.",
+      parameters: {
+        type: "object",
+        properties: {
+          reasoning: {
+            type: "string",
+            description: "Why escalation is needed",
+          },
+          details: {
+            type: "string",
+            description: "Details about the escalation",
+          },
+        },
+        required: ["reasoning", "details"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "refuseAndQuit",
+      description: "Refuse to complete the task and exit",
+      parameters: {
+        type: "object",
+        properties: {
+          reasoning: {
+            type: "string",
+            description: "Why the task is being refused",
+          },
+          details: {
+            type: "string",
+            description: "Details about the refusal",
+          },
+        },
+        required: ["reasoning", "details"],
+      },
+    },
+  },
 ];
 
 // Morph Fast Apply tool (conditional)

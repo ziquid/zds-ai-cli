@@ -2,17 +2,23 @@ import crypto from "crypto";
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { ChatHistoryManager } from "../utils/chat-history-manager.js";
 import { ToolResult } from "../types/index.js";
 import { ToolDiscovery } from "./tool-discovery.js";
 
 export class TaskManagementTool implements ToolDiscovery {
+  private agent: any = null;
   private artifactFilePath: string = path.join(
     os.homedir(), "tmp", `verification-artifact-${process.pid}-${Date.now()}.json`
   );
   private artifactMd5: string | null = null;
 
+  setAgent(agent: any) {
+    this.agent = agent;
+  }
+
   getHandledToolNames(): string[] {
-    return ["createVerificationArtifact"];
+    return ["createVerificationArtifact", "finishTaskAndQuit", "escalateAndQuit", "refuseAndQuit"];
   }
 
   async createVerificationArtifact(
@@ -68,5 +74,90 @@ export class TaskManagementTool implements ToolDiscovery {
         error: error instanceof Error ? error.message : "Unknown error creating verification artifact",
       };
     }
+  }
+
+  async finishTaskAndQuit(reasoning: string, details?: string): Promise<ToolResult> {
+    const artifactError = this.verifyArtifact();
+    if (artifactError) {
+      return { success: false, error: artifactError };
+    }
+    this.printYamlAndExit("finished", reasoning, 0, details);
+    return { success: true, output: "" };
+  }
+
+  async escalateAndQuit(reasoning: string, details: string): Promise<ToolResult> {
+    const artifactError = this.verifyArtifact();
+    if (artifactError) {
+      return { success: false, error: artifactError };
+    }
+    this.printYamlAndExit("escalated", reasoning, 1, details);
+    return { success: true, output: "" };
+  }
+
+  async refuseAndQuit(reasoning: string, details: string): Promise<ToolResult> {
+    this.printYamlAndExit("refused", reasoning, 2, details);
+    return { success: true, output: "" };
+  }
+
+  private saveContext(): void {
+    if (!this.agent) return;
+    try {
+      const historyManager = ChatHistoryManager.getInstance();
+      historyManager.saveContext(
+        this.agent.getSystemPrompt(),
+        this.agent.getChatHistory(),
+        this.agent.getSessionState()
+      );
+      historyManager.saveMessages(this.agent.getMessages());
+    } catch {
+      // best-effort save before exit
+    }
+  }
+
+  private verifyArtifact(): string | null {
+    if (!this.artifactMd5) {
+      return "Verification Artifact is required but missing.  Please run createVerificationArtifact first.";
+    }
+    try {
+      const content = fs.readFileSync(this.artifactFilePath, "utf8");
+      const md5 = crypto.createHash("md5").update(content).digest("hex");
+      if (md5 !== this.artifactMd5) {
+        return "Verification Artifact has been altered and cannot be trusted.";
+      }
+    } catch {
+      return "Verification Artifact file is missing or unreadable.  Please run createVerificationArtifact first.";
+    }
+    return null;
+  }
+
+  private yamlValue(value: string): string {
+    if (value.includes("\n")) {
+      return "|\n  " + value.replace(/\n/g, "\n  ");
+    }
+    if (/[:#\[\]{}&*!|>'"@`,]/.test(value) || value.trim() !== value) {
+      return `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+    }
+    return value;
+  }
+
+  private printYamlAndExit(
+    status: "finished" | "refused" | "escalated",
+    reasoning: string,
+    exitCode: number,
+    details?: string
+  ): void {
+    const lines: string[] = [
+      `status: ${status}`,
+      `reasoning: ${this.yamlValue(reasoning)}`,
+    ];
+    if (details !== undefined) {
+      lines.push(`details: ${this.yamlValue(details)}`);
+    }
+    if (this.artifactMd5) {
+      lines.push(`verification_artifact: ${this.artifactFilePath}`);
+    }
+    process.stdout.write(lines.join("\n") + "\n");
+    this.saveContext();
+    process.exit(exitCode);
   }
 }

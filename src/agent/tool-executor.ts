@@ -392,6 +392,12 @@ export class ToolExecutor {
         return await this.taskManagementTool.createVerificationArtifact(
           args.status, args.task, args.artifact, args.checks, args.issues, args.meta
         );
+      case "finishTaskAndQuit":
+        return await this.taskManagementTool.finishTaskAndQuit(args.reasoning, args.details);
+      case "escalateAndQuit":
+        return await this.taskManagementTool.escalateAndQuit(args.reasoning, args.details);
+      case "refuseAndQuit":
+        return await this.taskManagementTool.refuseAndQuit(args.reasoning, args.details);
       default:
         if (toolName.startsWith("mcp__")) {
           return await this.executeMCPTool(toolName, args);
