@@ -366,6 +366,12 @@ export class GrokResponsesClient {
       } catch (error: any) {
         if (signal?.aborted) return;
 
+        if (error.status === 400 && error.message?.toLowerCase().includes("does not support tools")) {
+          this.supportsTools = false;
+          delete params.tools;
+          continue;
+        }
+
         const is429 =
           error.status === 429 ||
           error.code === "rate_limit_exceeded" ||
