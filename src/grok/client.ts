@@ -420,6 +420,16 @@ export class LLMClient {
           throw new Error(`${this.backendName} API error: ${error.message}\nRequest logged to: ${requestFile}\nResponse logged to: ${responseFile}`);
         }
 
+        // Check if it's a 401 authentication error
+        const is401 = error.status === 401 ||
+                      (error.error && error.error.type === 'authentication_error') ||
+                      (error.message && error.message.toLowerCase().includes('oauth token has expired')) ||
+                      (error.message && error.message.toLowerCase().includes('failed to authenticate'));
+
+        if (is401) {
+          throw new Error('AUTH_ERROR: ' + error.message);
+        }
+
         // If not 429 or out of retries, throw the error
         throw new Error(`${this.backendName} API error: ${error.message}`);
       }
@@ -669,6 +679,16 @@ export class LLMClient {
 
           // Throw error with file references
           throw new Error(`${this.backendName} API error: ${error.message}\nRequest logged to: ${requestFile}\nResponse logged to: ${responseFile}`);
+        }
+
+        // Check if it's a 401 authentication error
+        const is401 = error.status === 401 ||
+                      (error.error && error.error.type === 'authentication_error') ||
+                      (error.message && error.message.toLowerCase().includes('oauth token has expired')) ||
+                      (error.message && error.message.toLowerCase().includes('failed to authenticate'));
+
+        if (is401) {
+          throw new Error('AUTH_ERROR: ' + error.message);
         }
 
         // If not 429 or out of retries, throw the error

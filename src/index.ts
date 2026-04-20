@@ -435,12 +435,23 @@ async function processPromptHeadless(
     // Exit cleanly after processing
     process.exit(0);
   } catch (error: unknown) {
-    // Output error as plain text
-    if (error && typeof error === "object" && "message" in error) {
-      console.log(`Error: ${(error as { message: string }).message}`);
-    } else {
-      console.log(`Error: ${String(error)}`);
+    const msg = (error && typeof error === "object" && "message" in error)
+      ? (error as { message: string }).message
+      : String(error);
+
+    if (msg.startsWith('AUTH_ERROR:')) {
+      console.error(msg);
+      if (currentAgent) {
+        ChatHistoryManager.getInstance().saveContext(
+          currentAgent.getSystemPrompt(),
+          currentAgent.getChatHistory(),
+          currentAgent.getSessionState()
+        );
+      }
+      process.exit(10);
     }
+
+    console.log(`Error: ${msg}`);
     process.exit(1);
   }
 }
@@ -1166,9 +1177,13 @@ program
                 }
               }
             }
-          } catch (error) {
+          } catch (error: any) {
+            if (error?.message?.startsWith('AUTH_ERROR:')) {
+              console.error(error.message);
+              saveContext();
+              process.exit(10);
+            }
             // Handle Ctrl+C or other interruptions
-            // Save context before exiting
             saveContext();
             console.log('\n👋 Goodbye!');
             process.exit(0);

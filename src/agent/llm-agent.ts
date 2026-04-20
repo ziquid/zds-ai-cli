@@ -1240,6 +1240,11 @@ export class LLMAgent extends EventEmitter {
 
       return newEntries;
     } catch (error: any) {
+      // Re-throw auth errors -- caller must handle these
+      if (error.message?.startsWith('AUTH_ERROR:')) {
+        throw error;
+      }
+
       // Check if context is too large (413 error when vision already disabled)
       if (error.message && error.message.startsWith('CONTEXT_TOO_LARGE:')) {
         const beforeCount = this.chatHistory.length;
@@ -1821,6 +1826,11 @@ export class LLMAgent extends EventEmitter {
 
       yield { type: "done" };
     } catch (error: any) {
+      // Re-throw auth errors -- caller must handle these
+      if (error.message?.startsWith('AUTH_ERROR:')) {
+        throw error;
+      }
+
       // Check if this was a cancellation (check both abort signal and error name)
       if (this.abortController?.signal.aborted || error.name === 'AbortError' || error.code === 'ABORT_ERR') {
         yield {
