@@ -171,6 +171,11 @@ export class GrokResponsesClient {
 
   /** Convert LLMTool array to Responses API function tool format. */
   private toResponsesTools(tools: LLMTool[]): any[] {
+    if (tools.length > this.MAX_TOOLS) {
+      const dropped = tools.slice(this.MAX_TOOLS);
+      const droppedNames = dropped.map((t) => t.function?.name ?? t.name ?? t.type).join(', ');
+      console.error(`Grok tool limit: ${tools.length} tools exceeds maximum of ${this.MAX_TOOLS}. Dropped ${dropped.length} tools: ${droppedNames}`);
+    }
     return tools.slice(0, this.MAX_TOOLS).map((t) => ({
       type: "function",
       name: t.function.name,

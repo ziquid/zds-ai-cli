@@ -279,8 +279,10 @@ export class LLMClient {
     // xAI Grok (Chat Completions path) has a hard limit of 200 tools per request
     const isGrok = this.client.baseURL?.includes('x.ai') || this.backendName.toLowerCase() === 'grok';
     if (isGrok && allTools.length > 200) {
-      console.error(`Grok tool limit: ${allTools.length} tools exceeds maximum of 200.  Trimming to 200 tools.`);
-      allTools.splice(200);
+      const total = allTools.length;
+      const dropped = allTools.splice(200);
+      const droppedNames = dropped.map((t: any) => t.function?.name ?? t.name ?? t.type).join(', ');
+      console.error(`Grok tool limit: ${total} tools exceeds maximum of 200. Dropped ${dropped.length} tools: ${droppedNames}`);
     }
 
     // Only include tools if the model supports them AND tools are provided
@@ -508,8 +510,10 @@ export class LLMClient {
     // xAI Grok (Chat Completions path) has a hard limit of 200 tools per request
     const isGrok = this.client.baseURL?.includes('x.ai') || this.backendName.toLowerCase() === 'grok';
     if (isGrok && allTools.length > 200) {
-      console.error(`Grok tool limit: ${allTools.length} tools exceeds maximum of 200.  Trimming to 200 tools.`);
-      allTools.splice(200);
+      const total = allTools.length;
+      const dropped = allTools.splice(200);
+      const droppedNames = dropped.map((t: any) => t.function?.name ?? t.name ?? t.type).join(', ');
+      console.error(`Grok tool limit: ${total} tools exceeds maximum of 200. Dropped ${dropped.length} tools: ${droppedNames}`);
     }
 
     // Only include tools if the model supports them
