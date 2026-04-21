@@ -41,13 +41,22 @@ _build_voice_strings() {
 _load_mode_config() {
   local mode=$1
 
-  SPEED=$(yq ".speech.$mode.kokoro.speed" "$ZDS_AI_AGENT_CONFIG_FILE")
-  NORM=$(yq ".speech.$mode.kokoro.norm" "$ZDS_AI_AGENT_CONFIG_FILE")
-  PITCH=$(yq ".speech.$mode.kokoro.pitch" "$ZDS_AI_AGENT_CONFIG_FILE")
+  if [[ $(yq ".speech.$mode.speechify" "$ZDS_AI_AGENT_CONFIG_FILE") != null ]]; then
+    PROVIDER=speechify
+    SPEECHIFY_VOICE_ID=$(yq ".speech.$mode.speechify.voice_id" "$ZDS_AI_AGENT_CONFIG_FILE")
+    SPEED=$(yq ".speech.$mode.speechify.speed // \"1.0\"" "$ZDS_AI_AGENT_CONFIG_FILE")
+    NORM=$(yq ".speech.$mode.speechify.norm // \"-3\"" "$ZDS_AI_AGENT_CONFIG_FILE")
+    PITCH=$(yq ".speech.$mode.speechify.pitch // \"0\"" "$ZDS_AI_AGENT_CONFIG_FILE")
+  else
+    PROVIDER=kokoro
+    SPEED=$(yq ".speech.$mode.kokoro.speed" "$ZDS_AI_AGENT_CONFIG_FILE")
+    NORM=$(yq ".speech.$mode.kokoro.norm" "$ZDS_AI_AGENT_CONFIG_FILE")
+    PITCH=$(yq ".speech.$mode.kokoro.pitch" "$ZDS_AI_AGENT_CONFIG_FILE")
 
-  local voices=$(_build_voice_strings ".speech.$mode")
-  VOICE="${voices%|*}"
-  VOICE_REMOTE="${voices#*|}"
+    local voices=$(_build_voice_strings ".speech.$mode")
+    VOICE="${voices%|*}"
+    VOICE_REMOTE="${voices#*|}"
+  fi
 }
 
 # Load default TTS configuration
@@ -196,6 +205,25 @@ _tts_render_kokoro_remote_sentences() {
   return 0
 }
 
+_tts_render_speechify_content() {
+  local content="$1"
+  local output_file="$2"
+  local language=$(_tts_get_language "$content")
+
+  curl -s -X POST "https://api.speechify.ai/v1/audio/speech" \
+    -H "Authorization: Bearer ${SPEECHIFY_API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "{\"input\": $(echo "$content" | jq -Rs .), \"voice_id\": \"${SPEECHIFY_VOICE_ID}\", \"audio_format\": \"wav\", \"language\": \"${language}\"}" \
+    2>> "$LOGFILE" | jq -r '.audio_data' | base64 -d > "$output_file"
+}
+
+_tts_render_speechify_sentences() {
+  local input_file="$1"
+  local output_file="$2"
+
+  _tts_render_speechify_content "$(cat "$input_file")" "$output_file"
+}
+
 _tts_prep_file() {
   FILE_TYPE=$(file -b "$1")
   echo $FILE_TYPE
@@ -263,7 +291,11 @@ for a in "$@"; do
   (
     _tts_prep_file "$a"
 #    _tts_render_kokoro "$a" "${b}-temp1.wav" || continue
-    _tts_render_kokoro_remote_sentences "$a" "${b}-temp1.wav" || continue
+    if [[ "$PROVIDER" == speechify ]]; then
+      _tts_render_speechify_sentences "$a" "${b}-temp1.wav" || continue
+    else
+      _tts_render_kokoro_remote_sentences "$a" "${b}-temp1.wav" || continue
+    fi
     _tts_fix_audio "${b}-temp1.wav" "${b}-temp2.wav" || continue
     _tts_postprocess_audio "${b}-temp2.wav" "${b}.wav" || continue
     rm -f "${b}-temp1.wav" "${b}-temp2.wav"
