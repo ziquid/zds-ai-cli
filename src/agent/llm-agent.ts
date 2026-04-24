@@ -247,6 +247,7 @@ export class LLMAgent extends EventEmitter {
   private messageProcessor: MessageProcessor;
   private contextManager: ContextManager;
   private maxContextSize: number = 128000; // Default context size, can be overridden by MAXCONTEXT hook command
+  private pendingContinue?: string;
 
 
 
@@ -462,7 +463,8 @@ export class LLMAgent extends EventEmitter {
       setLLMClient: (client: LLMClient | GrokResponsesClient) => { this.llmClient = client; },
       setPersona: (persona: string, color: string) => { this.persona = persona; this.personaColor = color; },
       setMood: (mood: string, color: string) => { this.mood = mood; this.moodColor = color; },
-      setActiveTask: (task: string, action: string, color: string) => { this.activeTask = task; this.activeTaskAction = action; this.activeTaskColor = color; }
+      setActiveTask: (task: string, action: string, color: string) => { this.activeTask = task; this.activeTaskAction = action; this.activeTaskColor = color; },
+      setPendingContinue: (message: string) => { this.pendingContinue = message; }
     });
 
     // Initialize session manager
@@ -1928,6 +1930,16 @@ export class LLMAgent extends EventEmitter {
   setSystemPrompt(prompt: string): void {
     // System prompt is always dynamic - render from current variable state
     this.renderSystemMessage();
+  }
+
+  /**
+   * Get and clear the pending CONTINUE message set by a hook.
+   * Returns undefined if no CONTINUE is pending.
+   */
+  takePendingContinue(): string | undefined {
+    const msg = this.pendingContinue;
+    this.pendingContinue = undefined;
+    return msg;
   }
 
   /**

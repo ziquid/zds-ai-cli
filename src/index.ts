@@ -405,17 +405,24 @@ async function processPromptHeadless(
       process.exit(0);
     }
 
-    // Otherwise, process as normal user message
-    const chatEntries = await agent.processUserMessage(prompt);
-
-    // Collect all assistant responses with content (excluding the user prompt entry)
-    // Skip assistant messages that have tool_calls - those are intermediate, not final responses
+    // Process the initial prompt, then loop if any hook issues a CONTINUE command
     const assistantResponses: string[] = [];
-    for (const entry of chatEntries) {
-      const content = getTextContent(entry.content);
-      if (entry.type === "assistant" && content && content.trim() && !entry.tool_calls) {
-        assistantResponses.push(content);
+    let currentPrompt = prompt;
+    while (true) {
+      const chatEntries = await agent.processUserMessage(currentPrompt);
+
+      // Collect assistant responses from this round (skip intermediate tool-call entries)
+      for (const entry of chatEntries) {
+        const content = getTextContent(entry.content);
+        if (entry.type === "assistant" && content && content.trim() && !entry.tool_calls) {
+          assistantResponses.push(content);
+        }
       }
+
+      // Check if a hook issued a CONTINUE command for this round
+      const continueMsg = agent.takePendingContinue();
+      if (!continueMsg) break;
+      currentPrompt = continueMsg;
     }
 
     // Save updated chat history and messages

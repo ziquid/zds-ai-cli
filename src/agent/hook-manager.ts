@@ -57,6 +57,8 @@ export interface HookManagerDependencies {
   setActiveTask(task: string, action: string, color: string): void;
   /** Execute a tool by name with parameters (for CALL commands) */
   executeToolByName?(toolName: string, parameters: Record<string, any>): Promise<{ success: boolean; output?: string; error?: string; hookCommands?: any[] }>;
+  /** Set pending CONTINUE message for headless mode loop */
+  setPendingContinue?(message: string): void;
 }
 
 /**
@@ -543,6 +545,10 @@ export class HookManager {
       this.executeCalls(commands.conditionalResults.calls).catch(error => {
         console.error("Error executing conditional CALL commands:", error);
       });
+    }
+
+    if (commands.continueMsg && this.deps.setPendingContinue) {
+      this.deps.setPendingContinue(commands.continueMsg);
     }
 
     return true;
