@@ -64,8 +64,10 @@ export class VariableDef {
     let def = VariableDef.definitions.get(name);
     if (def) return def;
 
-    // Try to find in PROMPT_VARS template
-    const predefined = getPROMPT_VARS().find(v => v.name === name);
+    let predefined: VariableDef | undefined;
+    for (const v of getPROMPT_VARS()) {
+      if (v.name === name) predefined = v;
+    }
     if (predefined) {
       VariableDef.definitions.set(name, predefined);
       return predefined;

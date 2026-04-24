@@ -86,11 +86,17 @@ export class SettingsManager {
     // User settings path: custom or ~/.zds-ai/cli-settings.json
     this.userSettingsPath = SettingsManager.customUserSettingsPath || path.join(os.homedir(), ".zds-ai", "cli-settings.json");
 
-    // User mcp servers path: ~/.zds-ai/mcp.json
-    this.userMcpServersPath = path.join(os.homedir(), ".zds-ai", "mcp.json");
+    // Derive config home from the settings file's directory, not os.homedir().
+    // When invoked with -s /agent-home/.zds-ai/cli-settings.json (e.g. by sociobot
+    // running as a different user), HOME points to the wrong user.  The settings
+    // file path is the authoritative source for where mcp.json and cli-vars.yml live.
+    const configHomeDir = path.dirname(this.userSettingsPath);
 
-    // User variable definitions path: ~/.zds-ai/cli-vars.yml
-    this.userVarsPath = path.join(os.homedir(), ".zds-ai", "cli-vars.yml");
+    // User mcp servers path: <config-home>/mcp.json
+    this.userMcpServersPath = path.join(configHomeDir, "mcp.json");
+
+    // User variable definitions path: <config-home>/cli-vars.yml
+    this.userVarsPath = path.join(configHomeDir, "cli-vars.yml");
 
     // Project settings path: .zds-ai/project-settings.json (in current working directory)
     this.projectSettingsPath = path.join(process.cwd(), ".zds-ai", "project-settings.json");
@@ -615,28 +621,21 @@ export class SettingsManager {
     return undefined; // No default - let API decide
   }
 
-  /**
-   * Load variable definitions from ~/.zds-ai/cli-vars.yml
-   * Returns array of variable definition objects
-   */
   public loadVariableDefinitions(): any[] {
     try {
-      if (!fs.existsSync(this.userVarsPath)) {
-        // Return empty array if file doesn't exist
-        return [];
-      }
+      if (!fs.existsSync(this.userVarsPath)) return [];
 
       const fileContents = fs.readFileSync(this.userVarsPath, 'utf8');
       const data = yaml.load(fileContents) as { variables: any[] };
 
       if (!data || !Array.isArray(data.variables)) {
-        console.error('Invalid cli-vars.yml format: expected { variables: [...] }');
+        console.error(`Invalid cli-vars.yml format in ${this.userVarsPath}: expected { variables: [...] }`);
         return [];
       }
 
       return data.variables;
     } catch (error) {
-      console.error(`Error loading ~/.zds-ai/cli-vars.yml: ${error}`);
+      console.error(`Error loading ${this.userVarsPath}: ${error}`);
       return [];
     }
   }
