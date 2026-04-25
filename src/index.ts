@@ -6,7 +6,8 @@ import React from "react";
 import { render } from "ink";
 import { program } from "commander";
 import * as dotenv from "dotenv";
-import { LLMAgent } from "./agent/llm-agent.js";
+import { LLMAgent, ChatEntry } from "./agent/llm-agent.js";
+import { TaskQuitSignal } from "./tools/task-management-tool.js";
 import ChatInterface from "./ui/components/chat-interface.js";
 import { getSettingsManager } from "./utils/settings-manager.js";
 import { ConfirmationService } from "./utils/confirmation-service.js";
@@ -406,22 +407,33 @@ async function processPromptHeadless(
     }
 
     // Process the initial prompt, then loop if any hook issues a CONTINUE command
+    let taskQuitSignal: TaskQuitSignal | null = null;
     const assistantResponses: string[] = [];
     let currentPrompt = prompt;
     while (true) {
-      const chatEntries = await agent.processUserMessage(currentPrompt);
+      let chatEntries: ChatEntry[] = [];
+      try {
+        chatEntries = await agent.processUserMessage(currentPrompt);
+      } catch (err) {
+        if (err instanceof TaskQuitSignal) {
+          taskQuitSignal = err;
+          chatEntries = err.accumulatedEntries || [];
+        } else {
+          throw err;
+        }
+      }
 
-      // Collect assistant responses from this round (skip intermediate tool-call entries)
+      // Collect assistant responses from this round
       for (const entry of chatEntries) {
         const content = getTextContent(entry.content);
-        if (entry.type === "assistant" && content && content.trim() && !entry.tool_calls) {
+        if (entry.type === "assistant" && content && content.trim() && content !== "(Calling tools to perform this request)") {
           assistantResponses.push(content);
         }
       }
 
       // Check if a hook issued a CONTINUE command for this round
       const continueMsg = agent.takePendingContinue();
-      if (!continueMsg) break;
+      if (!continueMsg || taskQuitSignal) break;
       currentPrompt = continueMsg;
     }
 
@@ -435,8 +447,15 @@ async function processPromptHeadless(
     // Output all assistant responses
     if (assistantResponses.length > 0) {
       console.log(assistantResponses.join('\n'));
-    } else {
+    } else if (!taskQuitSignal) {
       console.log("I understand, but I don't have a specific response.");
+    }
+
+    // If the agent called finishTaskAndQuit/escalateAndQuit/refuseAndQuit, print its
+    // YAML output and exit with the requested code
+    if (taskQuitSignal) {
+      process.stdout.write(taskQuitSignal.yamlOutput);
+      process.exit(taskQuitSignal.exitCode);
     }
 
     // Exit cleanly after processing

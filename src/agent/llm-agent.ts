@@ -1,4 +1,5 @@
 import { LLMClient, LLMMessage, LLMToolCall } from "../grok/client.js";
+import { TaskQuitSignal } from "../tools/task-management-tool.js";
 import { GrokResponsesClient, shouldUseResponsesAPI } from "../grok/responses-client.js";
 import type { ChatCompletionContentPart } from "openai/resources/chat/completions.js";
 import {
@@ -1242,6 +1243,13 @@ export class LLMAgent extends EventEmitter {
 
       return newEntries;
     } catch (error: any) {
+      // Re-throw task quit signal with accumulated entries so processPromptHeadless
+      // can flush text responses before printing the YAML and exiting
+      if (error instanceof TaskQuitSignal) {
+        error.accumulatedEntries = [...newEntries];
+        throw error;
+      }
+
       // Re-throw auth errors -- caller must handle these
       if (error.message?.startsWith('AUTH_ERROR:')) {
         throw error;

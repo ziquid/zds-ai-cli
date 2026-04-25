@@ -6,6 +6,20 @@ import { ChatHistoryManager } from "../utils/chat-history-manager.js";
 import { ToolResult } from "../types/index.js";
 import { ToolDiscovery } from "./tool-discovery.js";
 
+/**
+ * Thrown by finishTaskAndQuit / escalateAndQuit / refuseAndQuit instead of calling
+ * process.exit() directly, so processPromptHeadless can flush text responses first.
+ */
+export class TaskQuitSignal {
+  /** Entries accumulated in processUserMessage before the signal was thrown. Set by llm-agent. */
+  public accumulatedEntries: any[] = [];
+
+  constructor(
+    public readonly exitCode: number,
+    public readonly yamlOutput: string
+  ) {}
+}
+
 export class TaskManagementTool implements ToolDiscovery {
   private agent: any = null;
   private artifactFilePath: string = path.join(
@@ -145,7 +159,7 @@ export class TaskManagementTool implements ToolDiscovery {
     reasoning: string,
     exitCode: number,
     details?: string
-  ): void {
+  ): never {
     const lines: string[] = [
       `status: ${status}`,
       `reasoning: ${this.yamlValue(reasoning)}`,
@@ -156,8 +170,7 @@ export class TaskManagementTool implements ToolDiscovery {
     if (this.artifactMd5) {
       lines.push(`verification_artifact: ${this.artifactFilePath}`);
     }
-    process.stdout.write(lines.join("\n") + "\n");
     this.saveContext();
-    process.exit(exitCode);
+    throw new TaskQuitSignal(exitCode, lines.join("\n") + "\n");
   }
 }
