@@ -289,11 +289,11 @@ for a in "$@"; do
 
   b=${outdir}$(basename "$a" .txt)$SUFFIX.$$
   (
-    _tts_prep_file "$a"
 #    _tts_render_kokoro "$a" "${b}-temp1.wav" || continue
     if [[ "$PROVIDER" == speechify ]]; then
       _tts_render_speechify_sentences "$a" "${b}-temp1.wav" || continue
     else
+      _tts_prep_file "$a"
       _tts_render_kokoro_remote_sentences "$a" "${b}-temp1.wav" || continue
     fi
     _tts_fix_audio "${b}-temp1.wav" "${b}-temp2.wav" || continue

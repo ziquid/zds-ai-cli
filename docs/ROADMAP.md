@@ -13,9 +13,10 @@
       - [  ] 1.3.3: Simplify the interface for loading/saving settings
       - [  ] 1.3.4: Better separation of user vs project settings
       - [✅] 1.3.5: Add CLI arg to use custom user settings path
-   - [  ] 1.4: Add support for Grok xAI Messages API
+   - [✅] 1.4: Add support for Grok xAI Messages API
    - [✅] 1.5: Add MCP tool denylist to exclude unwanted tools from LLM context (Backlog #15)
-   - [  ] 1.6:
+   - [✅] 1.6: Add CONTINUE Hook Command
+   - [  ] 1.7:
 
 - [  ] 2: DATA PERSISTENCE
    - [  ] 2.1: Migrate context storage from JSON files to SQLite database
@@ -25,6 +26,8 @@
 - [  ] 3: MISC IMPROVEMENTS
    - [  ] 3.1: Consider integrating [Agent Skills](https://agentskills.io)
    - [  ] 3.2: Add preUserInput hook
+   - [✅] 3.3: Add support for Speechify to talking-agents.sh
+   - [✅] 3.4: Add video-agents.sh
 
 ### Bug Fixes
 
