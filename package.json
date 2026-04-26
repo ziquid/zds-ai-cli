@@ -18,7 +18,8 @@
     "generate_image_sd.sh": "dist/bin/generate_image_sd.sh",
     "joycaption.sh": "dist/bin/joycaption.sh",
     "read_xlsx.py": "dist/bin/read_xlsx.py",
-    "talking-agents.sh": "dist/bin/talking-agents.sh"
+    "talking-agents.sh": "dist/bin/talking-agents.sh",
+    "video-agents.sh": "dist/bin/video-agents.sh"
   },
   "scripts": {
     "build": "tsc && mkdir -p dist/bin && cp -r src/bin/* dist/bin/",
