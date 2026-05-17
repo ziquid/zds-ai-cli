@@ -5,17 +5,17 @@
 [[ -f ~/.env ]] && source ~/.env
 
 # Defaults - only MOVE_DIR is optional
-WIDTH=480
-HEIGHT=720
-SAMPLER="DPM++ 2M Karras"
+WIDTH=512
+HEIGHT=768
+SAMPLER="DPM++ 2M SDE Karras"
 CFG_SCALE=5.0
-MODEL_CHECKPOINT=cyberrealisticPony_v130.safetensors
+MODEL_CHECKPOINT=cyberrealisticPony_v160.safetensors
 STEPS=30
 
 # Show help before any env validation so it works outside agent context
 if [[ "$1" == --help || "$1" == -h || $# -eq 0 ]]; then
-  PROG_NAME=$(basename "$0")
-  echo "Usage: ${PROG_NAME} <prompt> [<negative prompt>] [options...]"
+  ME=$(basename "$0")
+  echo "Usage: ${ME} <prompt> [<negative prompt>] [options...]"
   echo
   echo Generate images using Stable Diffusion API
   echo
@@ -34,7 +34,8 @@ if [[ "$1" == --help || "$1" == -h || $# -eq 0 ]]; then
   echo "  --seed <num>             Seed for reproducible generation (default: random)"
   echo "  --name <name>            Name to call the file (default: based on prompt)"
   echo "  --list-models            Show checkpoint models installed"
-   echo "  --get-lora-details <name> Show complete JSON details for specified LoRA"
+  echo "  --list-loras             Show LoRAs installed"
+  echo "  --get-lora-details <name> Show complete JSON details for specified LoRA"
   echo "  --help                   Show this help message"
   echo
   echo Environment Variables:
@@ -42,12 +43,12 @@ if [[ "$1" == --help || "$1" == -h || $# -eq 0 ]]; then
   echo "  ZDS_AI_IMAGE_MOVE_DIR    Directory for --move option (optional -- --move ignored if not set)"
   echo
   echo Examples:
-  echo "  ${PROG_NAME} 'tropical beach'"
-  echo "  ${PROG_NAME} 'mountain landscape' 'blurry' --width 1024"
-  echo "  ${PROG_NAME} 'sunset' --move --cfg-scale 7.5"
-  echo "  ${PROG_NAME} 'whistler\'s mother' --steps 50 --cfg-scale 8.0 --name 'whistlers mom'"
-  echo "  ${PROG_NAME} 'portrait' --seed 12345 --name 'reproducible-portrait'"
-   echo "  ${PROG_NAME} --get-lora-details 'RealisticSkinv2_ponyv6_loraplus'"
+  echo "  ${ME} 'tropical beach'"
+  echo "  ${ME} 'mountain landscape' 'blurry' --width 1024"
+  echo "  ${ME} 'sunset' --move --cfg-scale 7.5"
+  echo "  ${ME} 'whistler\'s mother' --steps 50 --cfg-scale 8.0 --name 'whistlers mom'"
+  echo "  ${ME} 'portrait' --seed 12345 --name 'reproducible-portrait'"
+  echo "  ${ME} --get-lora-details 'RealisticSkinv2_ponyv6_loraplus'"
   exit 0
 fi
 
@@ -217,8 +218,8 @@ PAYLOAD=$(jq -n \
   '{
     prompt: $prompt, negative_prompt: $negative_prompt, steps: $steps,
     sampler_index: $sampler_index, width: $width, height: $height, cfg_scale: $cfg_scale,
-    sd_model_checkpoint: $sd_model_checkpoint, seed: $seed,
-    batch_size: 1, n_iter: 1, send_images: true
+    seed: $seed, batch_size: 1, n_iter: 1, send_images: true,
+    override_options: { sd_model_checkpoint: $sd_model_checkpoint }
   }')
 
 echo PAYLOAD: $PAYLOAD >> $LOGFILE
