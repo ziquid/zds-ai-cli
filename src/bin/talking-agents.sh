@@ -178,7 +178,7 @@ _tts_render_kokoro_remote_sentences() {
   local sentence_num=0
   local all_wav_files=()
 
-  while IFS= read -r sentence; do
+  while IFS= read sentence; do
     if [[ -n "$sentence" ]]; then
       sentence_num=$((sentence_num + 1))
       wav_file="$temp_dir/sentence_${sentence_num}.wav"
