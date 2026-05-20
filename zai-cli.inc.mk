@@ -1,4 +1,11 @@
-FEATURES := bun
+FEATURES := bun local-install
+
+ZDS_AI_ROOT ?= /usr/local/share/zds-ai
+SKILLZ_ROOT := $(ZDS_AI_ROOT)/skillz
+SKILLZ_VENDOR := $(SKILLZ_ROOT)/zai-cli
+
+LOCAL_INSTALL_ENTRIES := \
+    src/skillz/man/*.man.md:$(SKILLZ_VENDOR)/man:0644
 
 ALL_TARGET := pack
 
