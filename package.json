@@ -75,6 +75,7 @@
     "fs-extra": "^11.3.3",
     "ink": "^6.6.0",
     "ink-spawn": "^0.1.4",
+    "js-yaml": "^4.1.1",
     "marked": "^15.0.12",
     "marked-terminal": "^7.3.0",
     "openai": "^5.23.2",
@@ -86,6 +87,7 @@
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.19.27",
     "@types/prompts": "^2.4.9",
     "@types/react": "^19.0.0",
