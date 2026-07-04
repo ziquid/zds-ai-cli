@@ -1,17 +1,19 @@
-# grok-cli Test Suite
+# zai-cli Test Suite
 
-This directory contains test scripts for validating grok-cli features.
+This directory contains test scripts for validating zai-cli features.
 
 ## Test Scripts
 
 ### temperature-feature-test.zsh
+
 **Purpose:** Automated functional testing of temperature configuration feature
 **Coverage:** CLI temperature flags, validation, default behavior, persistence
 
 **Usage:**
-```bash
-cd <project root>
-zsh tests/temperature-feature-test.zsh
+
+```sh
+cd /path/to/zai-cli
+tests/temperature-feature-test.zsh
 ```
 
 **Test Cases:**
@@ -21,35 +23,39 @@ zsh tests/temperature-feature-test.zsh
 - State persistence validation
 
 ### test-venice.js
+
 **Purpose:** Validate Venice AI backend connection (bug fix verification)
 **Coverage:** Tests that Venice AI no longer receives unsupported 'think' parameter
 
 **Usage:**
-```bash
-cd <project root>
-bun tests/test-venice.js
+
+```sh
+cd /path/to/zai-cli
+tests/test-venice.js
 ```
 
 **Requirements:**
 - VENICE_API_KEY environment variable must be set
-- Project must be built (`bun run build`)
+- Project must be built (`mzke build`)
 
 **Test Cases:**
 - Venice AI connection without HTTP 400 errors
 - Basic message exchange with Venice backend
 
 ### test-duplicate-json.ts
+
 **Purpose:** Unit test for duplicate JSON handling in tool call arguments (bug fix verification)
 **Coverage:** Tests that concatenated/duplicated JSON objects are properly handled
 
 **Usage:**
-```bash
-cd <project root>
-bun tests/test-duplicate-json.ts
+
+```sh
+cd /path/to/zai-cli
+tests/test-duplicate-json.ts
 ```
 
 **Requirements:**
-- Project must be built (`bun run build`)
+- Project must be built (`mzke build`)
 
 **Test Cases:**
 - Exact duplicate objects
@@ -61,17 +67,19 @@ bun tests/test-duplicate-json.ts
 - Empty object duplicated
 
 ### test-slash-commands-headless.zsh
+
 **Purpose:** Automated functional testing of slash commands in headless and no-ink modes (bug fix verification)
 **Coverage:** Tests that slash commands work correctly in both `-p` (headless) and `--no-ink` (interactive plain) modes
 
 **Usage:**
-```bash
-cd <project root>
-zsh tests/test-slash-commands-headless.zsh
+
+```sh
+cd /path/to/zai-cli
+tests/test-slash-commands-headless.zsh
 ```
 
 **Requirements:**
-- Project must be built (`bun run build`)
+- Project must be built (`mzke build`)
 
 **Test Cases:**
 - `/help` command in headless mode
@@ -86,6 +94,7 @@ zsh tests/test-slash-commands-headless.zsh
 - `/context edit` in headless mode (error expected)
 
 ### test-tool-validation.md
+
 **Purpose:** Documentation of tool argument validation feature (bug fix documentation)
 **Coverage:** Explains how tool arguments are validated against schemas to prevent Ollama 400 errors
 
