@@ -62,8 +62,46 @@ export interface HookManagerDependencies {
 }
 
 /**
+ * Strip in-progress tool calls from messages for API testing
+ * Removes incomplete tool call sequences to avoid API errors
+ *
+ * @param messages Message array to clean
+ * @returns Cleaned message array without incomplete tool calls
+ */
+export function stripInProgressToolCalls(messages: any[]): any[] {
+  let lastAssistantIndex = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === 'assistant') {
+      lastAssistantIndex = i;
+      break;
+    }
+  }
+
+  if (lastAssistantIndex === -1 || !(messages[lastAssistantIndex] as any).tool_calls) {
+    return messages;
+  }
+
+  const cleanedMessages = JSON.parse(JSON.stringify(messages));
+  const toolCallIds = new Set(
+    ((cleanedMessages[lastAssistantIndex] as any).tool_calls || []).map((tc: any) => tc.id)
+  );
+
+  delete (cleanedMessages[lastAssistantIndex] as any).tool_calls;
+
+  return cleanedMessages.filter((msg, idx) => {
+    if (idx <= lastAssistantIndex) {
+      return true;
+    }
+    if (msg.role === 'tool' && toolCallIds.has((msg as any).tool_call_id)) {
+      return false;
+    }
+    return true;
+  });
+}
+
+/**
  * Manages hook execution for persona, mood, and task operations
- * 
+ *
  * Handles:
  * - Persona/mood/task hook execution with approval workflows
  * - Backend and model switching with validation
@@ -578,7 +616,7 @@ export class HookManager {
 
     // Render system message with current variable state before testing
     this.renderSystemMessage();
-    const testMessages = this.stripInProgressToolCalls(this.deps.messages);
+    const testMessages = stripInProgressToolCalls(this.deps.messages);
     const supportsTools = this.deps.getLLMClient().getSupportsTools();
     const tools = supportsTools ? await getAllLLMTools() : [];
     const requestPayload = {
@@ -690,7 +728,7 @@ export class HookManager {
 
       // Render system message with current variable state before testing
       this.renderSystemMessage();
-      const testMessages = this.stripInProgressToolCalls(this.deps.messages);
+      const testMessages = stripInProgressToolCalls(this.deps.messages);
       const supportsTools = this.deps.getLLMClient().getSupportsTools();
       const tools = supportsTools ? await getAllLLMTools() : [];
       requestPayload = {
@@ -759,44 +797,6 @@ export class HookManager {
         error: logPaths ? `${errorMessage}\n${logPaths}` : errorMessage
       };
     }
-  }
-
-  /**
-   * Strip in-progress tool calls from messages for API testing
-   * Removes incomplete tool call sequences to avoid API errors
-   * 
-   * @param messages Message array to clean
-   * @returns Cleaned message array without incomplete tool calls
-   */
-  private stripInProgressToolCalls(messages: any[]): any[] {
-    let lastAssistantIndex = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'assistant') {
-        lastAssistantIndex = i;
-        break;
-      }
-    }
-
-    if (lastAssistantIndex === -1 || !(messages[lastAssistantIndex] as any).tool_calls) {
-      return messages;
-    }
-
-    const cleanedMessages = JSON.parse(JSON.stringify(messages));
-    const toolCallIds = new Set(
-      ((cleanedMessages[lastAssistantIndex] as any).tool_calls || []).map((tc: any) => tc.id)
-    );
-
-    delete (cleanedMessages[lastAssistantIndex] as any).tool_calls;
-
-    return cleanedMessages.filter((msg, idx) => {
-      if (idx <= lastAssistantIndex) {
-        return true;
-      }
-      if (msg.role === 'tool' && toolCallIds.has((msg as any).tool_call_id)) {
-        return false;
-      }
-      return true;
-    });
   }
 
   /**

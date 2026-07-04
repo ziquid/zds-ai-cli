@@ -9,11 +9,11 @@
  * Run with: npm test -- tests/tool-call-ordering.test.ts
  */
 
-import { LLMAgent } from '../src/agent/llm-agent.js';
+import { stripInProgressToolCalls } from '../src/agent/hook-manager.js';
 import { GrokMessage } from '../src/types.js';
 
 describe('GrokAgent.stripInProgressToolCalls', () => {
-  const stripFn = LLMAgent.stripInProgressToolCalls;
+  const stripFn = stripInProgressToolCalls;
 
   describe('with no tool_calls (passthrough)', () => {
     it('should return original array when last assistant has no tool_calls', () => {
