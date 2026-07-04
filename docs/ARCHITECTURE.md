@@ -320,23 +320,23 @@ useEffect(() => {
 
 ## Build and Install
 
-```bash
-cd /Volumes/DM\ 2T/scm/grok-cli
-bun run build    # Compiles TypeScript
-bun link         # Installs globally
+```sh
+cd /path/to/zai-cli
+mzke build    # Compiles TypeScript
+mzke prig     # Package Remove and Install Globally
 ```
 
 ## Testing Tools
 
-```bash
-grok                                    # Start interactive mode
-grok "your message"                     # Send single message
-grok --show-all-tools                   # List all tools
-grok --show-context-stats               # Show token usage
-grok --show-context-stats -c FILE       # Show token usage for specific context file
+```sh
+zai-cli                                 # Start interactive mode
+zai-cli "your message"                  # Send single message
+zai-cli --show-all-tools                # List all tools
+zai-cli --show-context-stats            # Show token usage
+zai-cli --show-context-stats -c FILE    # Show token usage for specific context file
 ```
 
-Inside grok:
+Inside zai-cli:
 - `/introspect tools` - List all tools
 - `/introspect tool:toolName` - Show tool schema
 - `/help` - Show help

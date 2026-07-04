@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function testVenice() {
-  console.log('Testing Venice AI connection with local grok-cli build...\n');
+  console.log('Testing Venice AI connection with local zai-cli build...\n');
 
   if (!process.env.VENICE_API_KEY) {
     console.error('Error: VENICE_API_KEY not found in environment');
@@ -21,7 +21,7 @@ async function testVenice() {
 
   const cliPath = path.join(__dirname, '..', 'dist', 'index.js');
 
-  console.log('Starting grok-cli with Venice backend...');
+  console.log('Starting zai-cli with Venice backend...');
   console.log('Command: node ../dist/index.js -b venice -u https://api.venice.ai/api/v1 -m llama-3.3-70b -k $VENICE_API_KEY --auto-approve -p "Say hello"\n');
 
   const grok = spawn('node', [

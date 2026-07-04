@@ -123,7 +123,7 @@ exit 0
 
 ## Testing
 
-1. Start grok-cli session
+1. Start zai-cli session
 2. Configure hook to set `ENV MAX_TOKENS_NEXT=100`
 3. Trigger the hook (execute tool or start task)
 4. Verify response is limited to ~100 tokens
