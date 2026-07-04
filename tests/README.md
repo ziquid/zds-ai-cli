@@ -10,7 +10,7 @@ This directory contains test scripts for validating grok-cli features.
 
 **Usage:**
 ```bash
-cd /Volumes/DM 2T/Source/Agents/grok-cli
+cd <project root>
 zsh tests/temperature-feature-test.zsh
 ```
 
@@ -26,7 +26,7 @@ zsh tests/temperature-feature-test.zsh
 
 **Usage:**
 ```bash
-cd /Volumes/DM 2T/Source/Agents/grok-cli
+cd <project root>
 bun tests/test-venice.js
 ```
 
@@ -44,7 +44,7 @@ bun tests/test-venice.js
 
 **Usage:**
 ```bash
-cd /Volumes/DM 2T/Source/Agents/grok-cli
+cd <project root>
 bun tests/test-duplicate-json.ts
 ```
 
@@ -66,7 +66,7 @@ bun tests/test-duplicate-json.ts
 
 **Usage:**
 ```bash
-cd /Volumes/DM 2T/Source/Agents/grok-cli
+cd <project root>
 zsh tests/test-slash-commands-headless.zsh
 ```
 

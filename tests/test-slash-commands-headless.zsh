@@ -16,7 +16,7 @@ PASSED=0
 FAILED=0
 
 # Project root
-PROJECT_ROOT="/Volumes/DM 2T/Source/Agents/grok-cli"
+PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CLI_PATH="$PROJECT_ROOT/dist/index.js"
 
 # Check if built
